@@ -46,8 +46,14 @@ export const uploadToImgur = async (image) => {
             },
         });
     } catch (error) {
+        // Handle error
+        // For example, you can log the error or show a message to the user
         console.error("Error uploading image to Imgur:", error.message);
-        throw error;
+        // show complate error
+        console.error("Complete error:", error);
+        // If you want to throw the error to be handled by the caller, uncomment the next lin
+
+        // throw error;
     }
 
     imgurUrl = response.data.data.link;
