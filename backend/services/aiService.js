@@ -1,12 +1,13 @@
 import axios from "axios";
+// const Groq = require('groq-sdk');
+// import { Groq } from "groq-sdk";
+
+// const groq = new Groq();
+
 
 export const classifyImage = async (imageUrl) => {
     try {
         console.log("Classifying image:", imageUrl);
-        // Compress the image before sending it to the AI model
-        // const compressedImage = await compressImage(imageUrl);
-        // const formData = new FormData();
-
 
         const response = await axios.post(
             "https://openrouter.ai/api/v1/chat/completions",
@@ -34,15 +35,50 @@ export const classifyImage = async (imageUrl) => {
             }
         );
 
-
         console.log("AI response:", response.data);
-        // Check if the response contains valid data
-        if (!response.data || !response.data.choices || response.data.choices.length === 0) {
+
+        if (
+            !response.data ||
+            !response.data.choices ||
+            response.data.choices.length === 0
+        ) {
             throw new Error("Invalid AI response");
         }
-        
 
         return response.data.choices[0].message.content;
+
+        const chatCompletion = await groq.chat.completions.create({
+            "messages": [
+              {
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "What is in this image? Classify as recyclable, compostable, or landfill. And provide proper disposal instructions"
+                  },
+                  {
+                    "type": "image_url",
+                    "image_url": {
+                      "url": imageUrl
+                    }
+                  }
+                ]
+              }
+            ],
+            "model": "llama-3.2-11b-vision-preview",
+            "temperature": 1,
+            "max_completion_tokens": 1024,
+            "top_p": 1,
+            "stream": false,
+            "stop": null
+          });
+
+           console.log(chatCompletion.choices[0].message.content);
+
+           return chatCompletion.choices[0].message.content;
+
+
+        // Check if the response contains valid data
     } catch (error) {
         console.error("Classification error:", error);
         throw new Error("Failed to classify image");
