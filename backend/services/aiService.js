@@ -32,7 +32,7 @@ export const classifyImage = async (imageUrl) => {
             }
         );
 
-        console.log("AI response:", response.data);
+        console.log("AI response:", response);
 
         return response.data.choices[0].message.content;
     } catch (error) {
