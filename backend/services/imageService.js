@@ -1,5 +1,5 @@
 import axios from "axios";
-const cloudinary = require("cloudinary").v2;
+import { v2 as cloudinary } from 'cloudinary'
 cloudinary.config({
     cloud_name: "di0mvijee",
     api_key: "937372845829153",
