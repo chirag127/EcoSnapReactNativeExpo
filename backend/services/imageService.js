@@ -1,5 +1,6 @@
 import axios from "axios";
-import { v2 as cloudinary } from 'cloudinary'
+import { v2 as cloudinary } from "cloudinary";
+
 cloudinary.config({
     cloud_name: "di0mvijee",
     api_key: "937372845829153",
@@ -26,39 +27,34 @@ export const uploadToCloudinary = async (image) => {
 };
 
 export const uploadToImgur = async (image) => {
-    let imageData = image;
-
-
-    const IMGUR_CLIENT_ID = "869f294e59431cd";
-
-    let response;
-    let imgurUrl;
+    if (!image) {
+        throw new Error("No image data provided");
+    }
 
     try {
-        response = await axios({
+        const response = await axios({
             method: "post",
             url: "https://api.imgur.com/3/image",
             data: {
-                image: imageData,
+                image: image,
+                type: "base64",
             },
             headers: {
-                Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+                Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`,
+                "Content-Type": "application/json",
             },
         });
+
+        if (!response.data?.data?.link) {
+            throw new Error("Invalid response from Imgur");
+        }
+
+        return response.data.data.link;
     } catch (error) {
-        // Handle error
-        // For example, you can log the error or show a message to the user
-        console.error("Error uploading image to Imgur:", error.message);
-        // show complate error
-        console.error("Complete error:", error);
-        // If you want to throw the error to be handled by the caller, uncomment the next lin
-
-        // throw error;
+        console.error(
+            "Imgur upload error:",
+            error.response?.data || error.message
+        );
+        throw new Error("Failed to upload image to Imgur");
     }
-
-    imgurUrl = response.data.data.link;
-
-    console.log("Image URL:", imgurUrl);
-
-    return imgurUrl;
 };
