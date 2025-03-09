@@ -1,6 +1,5 @@
 import axios from "axios";
-import { v2 as cloudinary } from "cloudinary";
-
+import { v2 as cloudinary } from 'cloudinary'
 cloudinary.config({
     cloud_name: "di0mvijee",
     api_key: "937372845829153",
@@ -27,34 +26,33 @@ export const uploadToCloudinary = async (image) => {
 };
 
 export const uploadToImgur = async (image) => {
-    if (!image) {
-        throw new Error("No image data provided");
-    }
+    let imageData = image;
+
+
+    const IMGUR_CLIENT_ID = "869f294e59431cd";
+
+    let response;
+    let imgurUrl;
 
     try {
-        const response = await axios({
+        response = await axios({
             method: "post",
             url: "https://api.imgur.com/3/image",
             data: {
-                image: image,
-                type: "base64",
+                image: imageData,
             },
             headers: {
-                Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`,
-                "Content-Type": "application/json",
+                Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
             },
         });
-
-        if (!response.data?.data?.link) {
-            throw new Error("Invalid response from Imgur");
-        }
-
-        return response.data.data.link;
     } catch (error) {
-        console.error(
-            "Imgur upload error:",
-            error.response?.data || error.message
-        );
-        throw new Error("Failed to upload image to Imgur");
+        console.error("Error uploading image to Imgur:", error.message);
+        throw error;
     }
+
+    imgurUrl = response.data.data.link;
+
+    console.log("Image URL:", imgurUrl);
+
+    return imgurUrl;
 };

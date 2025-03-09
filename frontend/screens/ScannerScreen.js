@@ -19,7 +19,7 @@ const compressImage = async (uri) => {
         const manipResult = await ImageManipulator.manipulateAsync(
             uri,
             [{ resize: { width: 1024 } }],
-            { compress: 0.9, format: ImageManipulator.SaveFormat.PNG  }
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
         );
         return manipResult.uri;
     } catch (error) {
@@ -113,23 +113,20 @@ export default function ScannerScreen() {
     return (
         <View style={styles.container}>
             <ScrollView>
-                {image && (
-                    <Image source={{ uri: image }} style={styles.image} />
-                )}
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={takePhoto}>
-                        <Text style={styles.buttonText}>Take Photo</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={pickImage}>
-                        <Text style={styles.buttonText}>Pick Image</Text>
-                    </TouchableOpacity>
+            {image && <Image source={{ uri: image }} style={styles.image} />}
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.button} onPress={takePhoto}>
+                    <Text style={styles.buttonText}>Take Photo</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={pickImage}>
+                    <Text style={styles.buttonText}>Pick Image</Text>
+                </TouchableOpacity>
+            </View>
+            {classification && (
+                <View style={styles.resultContainer}>
+                    <Text style={styles.resultText}>{classification}</Text>
                 </View>
-                {classification && (
-                    <View style={styles.resultContainer}>
-                        <Text style={styles.resultText}>{classification}</Text>
-                    </View>
-                )}
-            </ScrollView>
+            )}</ScrollView>
         </View>
     );
 }

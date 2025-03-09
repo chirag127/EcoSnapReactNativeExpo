@@ -1,5 +1,5 @@
 import express from "express";
-import { uploadToImgur } from "../services/imageService.js";
+import { uploadToImgur,uploadToCloudinary } from "../services/imageService.js";
 import { classifyImage } from "../services/aiService.js";
 import Classification from "../models/Classification.js";
 
@@ -7,23 +7,10 @@ const router = express.Router();
 
 router.post("/classify", async (req, res) => {
     try {
-        if (!req.body || !req.body.image) {
-            return res.status(400).json({ error: "No image data provided" });
-        }
-
-        const imageUrl = await uploadToImgur(req.body.image);
-
-        if (!imageUrl) {
-            return res.status(400).json({ error: "Failed to upload image" });
-        }
-
+        const image  = req.body.image; // Assuming the image is sent as a base64 string
+        const imageUrl = await uploadToCloudinary(image);
+        // const imageUrl = await uploadToImgur(image);
         const response = await classifyImage(imageUrl);
-
-        if (!response) {
-            return res
-                .status(400)
-                .json({ error: "Failed to get classification" });
-        }
 
         const result = await Classification.create({
             imageUrl,
@@ -32,10 +19,7 @@ router.post("/classify", async (req, res) => {
 
         res.json(result);
     } catch (error) {
-        console.error("Classification error:", error);
-        res.status(500).json({
-            error: error.message || "Internal server error",
-        });
+        res.status(500).json({ error: error.message });
     }
 });
 
