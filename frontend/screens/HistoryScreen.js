@@ -6,9 +6,18 @@ import {
     Image,
     Text,
     ActivityIndicator,
+    Dimensions,
 } from "react-native";
 import axios from "axios";
 import { API_URL } from "../env";
+
+const getWasteColor = (response) => {
+    const text = response.toLowerCase();
+    if (text.includes("recyclable")) return "#4CAF50";
+    if (text.includes("compostable")) return "#FF9800";
+    if (text.includes("landfill")) return "#F44336";
+    return "#757575";
+};
 
 export default function HistoryScreen() {
     const [history, setHistory] = useState([]);
@@ -36,10 +45,17 @@ export default function HistoryScreen() {
     const renderItem = ({ item }) => (
         <View style={styles.historyItem}>
             <Image source={{ uri: item.imageUrl }} style={styles.thumbnail} />
-            <View style={styles.itemDetails}>
-                <Text style={styles.classification}>{item.response}</Text>
+            <View
+                style={[
+                    styles.itemDetails,
+                    { borderLeftColor: getWasteColor(item.response) },
+                ]}
+            >
                 <Text style={styles.timestamp}>
                     {new Date(item.timestamp).toLocaleString()}
+                </Text>
+                <Text style={styles.classification} numberOfLines={0}>
+                    {item.response}
                 </Text>
             </View>
         </View>
@@ -85,23 +101,38 @@ const styles = StyleSheet.create({
         padding: 15,
         borderBottomWidth: 1,
         borderBottomColor: "#eee",
+        backgroundColor: "#fff",
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        marginVertical: 4,
+        marginHorizontal: 8,
+        borderRadius: 8,
     },
     thumbnail: {
-        width: 80,
-        height: 80,
-        borderRadius: 5,
+        width: 100,
+        height: 100,
+        borderRadius: 8,
     },
     itemDetails: {
+        flex: 1,
         marginLeft: 15,
-        justifyContent: "center",
+        borderLeftWidth: 4,
+        paddingLeft: 10,
     },
     classification: {
-        fontSize: 18,
-        fontWeight: "bold",
-        marginBottom: 5,
+        fontSize: 16,
+        color: "#333",
+        marginTop: 4,
+        lineHeight: 22,
+        flexWrap: "wrap",
     },
     timestamp: {
         color: "#666",
+        fontSize: 12,
+        marginBottom: 4,
     },
     emptyText: {
         textAlign: "center",
