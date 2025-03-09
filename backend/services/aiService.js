@@ -2,6 +2,10 @@ import axios from "axios";
 
 export const classifyImage = async (imageUrl) => {
     try {
+        console.log("Classifying image:", imageUrl);
+        // Compress the image before sending it to the AI model
+        // const compressedImage = await compressImage(imageUrl);
+        // const formData = new FormData();
         const response = await axios.post(
             "https://openrouter.ai/api/v1/chat/completions",
             {
@@ -27,6 +31,8 @@ export const classifyImage = async (imageUrl) => {
                 },
             }
         );
+
+        console.log("AI response:", response.data);
 
         return response.data.choices[0].message.content;
     } catch (error) {
