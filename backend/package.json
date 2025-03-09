@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "netlify deploy --prod"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,9 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "form-data": "^4.0.2",
-    "mongoose": "^8.12.1"
+    "mongoose": "^8.12.1",
+    "netlify-cli": "^19.0.2",
+    "netlify-lambda": "^2.0.16",
+    "serverless-http": "^3.2.0"
   }
 }

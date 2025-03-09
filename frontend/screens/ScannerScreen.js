@@ -19,7 +19,7 @@ const compressImage = async (uri) => {
         const manipResult = await ImageManipulator.manipulateAsync(
             uri,
             [{ resize: { width: 1024 } }],
-            { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
+            { compress: 0.9, format: ImageManipulator.SaveFormat.PNG  }
         );
         return manipResult.uri;
     } catch (error) {
