@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     Image,
     Alert,
+    ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
@@ -111,6 +112,7 @@ export default function ScannerScreen() {
 
     return (
         <View style={styles.container}>
+            <ScrollView>
             {image && <Image source={{ uri: image }} style={styles.image} />}
             <View style={styles.buttonContainer}>
                 <TouchableOpacity style={styles.button} onPress={takePhoto}>
@@ -124,7 +126,7 @@ export default function ScannerScreen() {
                 <View style={styles.resultContainer}>
                     <Text style={styles.resultText}>{classification}</Text>
                 </View>
-            )}
+            )}</ScrollView>
         </View>
     );
 }

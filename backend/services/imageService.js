@@ -1,22 +1,33 @@
 import axios from "axios";
-import FormData from "form-data";
 
-export const uploadToImgur = async (base64Image) => {
+export const uploadToImgur = async (image) => {
+    let imageData = image;
+
+
+    const IMGUR_CLIENT_ID = "869f294e59431cd";
+
+    let response;
+    let imgurUrl;
+
     try {
-        const response = await axios.post(
-            "https://api.imgur.com/3/image",
-            {
-                image: base64Image,
-                type: "base64",
+        response = await axios({
+            method: "post",
+            url: "https://api.imgur.com/3/image",
+            data: {
+                image: imageData,
             },
-            {
-                headers: {
-                    Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`,
-                },
-            }
-        );
-        return response.data.data.link;
+            headers: {
+                Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+            },
+        });
     } catch (error) {
-        throw new Error("Failed to upload image to Imgur");
+        console.error("Error uploading image to Imgur:", error.message);
+        throw error;
     }
+
+    imgurUrl = response.data.data.link;
+
+    console.log("Image URL:", imgurUrl);
+
+    return imgurUrl;
 };
