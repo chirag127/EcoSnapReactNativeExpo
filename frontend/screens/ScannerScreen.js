@@ -13,6 +13,7 @@ import { Camera } from "expo-camera";
 import axios from "axios";
 import { API_URL } from "../env";
 import * as ImageManipulator from "expo-image-manipulator";
+import Markdown from 'react-native-markdown-display';
 
 const compressImage = async (uri) => {
     try {
@@ -113,23 +114,36 @@ export default function ScannerScreen() {
     return (
         <View style={styles.container}>
             <ScrollView>
-            {image && <Image source={{ uri: image }} style={styles.image} />}
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={takePhoto}>
-                    <Text style={styles.buttonText}>Take Photo</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={pickImage}>
-                    <Text style={styles.buttonText}>Pick Image</Text>
-                </TouchableOpacity>
-            </View>
-            {classification && (
-                <View style={styles.resultContainer}>
-                    <Text style={styles.resultText}>{classification}</Text>
+                {image && <Image source={{ uri: image }} style={styles.image} />}
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.button} onPress={takePhoto}>
+                        <Text style={styles.buttonText}>Take Photo</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={pickImage}>
+                        <Text style={styles.buttonText}>Pick Image</Text>
+                    </TouchableOpacity>
                 </View>
-            )}</ScrollView>
+                {classification && (
+                    <View style={styles.resultContainer}>
+                        <Markdown style={markdownStyles}>
+                            {classification}
+                        </Markdown>
+                    </View>
+                )}
+            </ScrollView>
         </View>
     );
 }
+
+const markdownStyles = {
+    body: { color: '#333', fontSize: 16 },
+    heading1: { fontSize: 24, fontWeight: 'bold', color: '#000', marginVertical: 10 },
+    heading2: { fontSize: 20, fontWeight: 'bold', color: '#000', marginVertical: 8 },
+    paragraph: { marginVertical: 8, lineHeight: 22 },
+    list: { marginVertical: 8 },
+    listItem: { marginVertical: 4 },
+    listUnorderedItemIcon: { fontSize: 8, marginRight: 10 },
+};
 
 const styles = StyleSheet.create({
     container: {

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import { API_URL } from "../env";
+import Markdown from "react-native-markdown-display";
 
 const getWasteColor = (response) => {
     const text = response.toLowerCase();
@@ -54,9 +55,7 @@ export default function HistoryScreen() {
                 <Text style={styles.timestamp}>
                     {new Date(item.timestamp).toLocaleString()}
                 </Text>
-                <Text style={styles.classification} numberOfLines={0}>
-                    {item.response}
-                </Text>
+                <Markdown style={markdownStyles}>{item.response}</Markdown>
             </View>
         </View>
     );
@@ -90,6 +89,26 @@ export default function HistoryScreen() {
         </View>
     );
 }
+
+const markdownStyles = {
+    body: { color: "#333", fontSize: 14 },
+    heading1: {
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "#000",
+        marginVertical: 6,
+    },
+    heading2: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#000",
+        marginVertical: 4,
+    },
+    paragraph: { marginVertical: 4, lineHeight: 20 },
+    list: { marginVertical: 4 },
+    listItem: { marginVertical: 2 },
+    listUnorderedItemIcon: { fontSize: 6, marginRight: 8 },
+};
 
 const styles = StyleSheet.create({
     container: {
