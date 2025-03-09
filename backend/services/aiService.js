@@ -12,7 +12,7 @@ export const classifyImage = async (imageUrl) => {
                         content: [
                             {
                                 type: "text",
-                                text: "What is in this image? Classify as recyclable, compostable, or landfill.",
+                                text: "What is in this image? Classify as recyclable, compostable, or landfill. And provide proper disposal instructions",
                             },
                             { type: "image_url", image_url: { url: imageUrl } },
                         ],
@@ -22,7 +22,7 @@ export const classifyImage = async (imageUrl) => {
             {
                 headers: {
                     Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                    "HTTP-Referer": process.env.APP_URL,
+                    // "HTTP-Referer": process.env.APP_URL,
                     "X-Title": "EcoSnap",
                 },
             }

@@ -1,11 +1,21 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, TouchableOpacity, Image } from "react-native";
+import {
+    StyleSheet,
+    View,
+    Text,
+    TouchableOpacity,
+    Image,
+    Alert,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
+import axios from "axios";
+import { API_URL } from "../env";
 
 export default function ScannerScreen() {
     const [image, setImage] = useState(null);
     const [classification, setClassification] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const takePhoto = async () => {
         const { status } = await Camera.requestCameraPermissionsAsync();
@@ -37,8 +47,40 @@ export default function ScannerScreen() {
     };
 
     const classifyImage = async (imageUri) => {
-        // TODO: Implement image classification logic
-        setClassification("Processing...");
+        try {
+            setIsLoading(true);
+            setClassification("Processing...");
+
+            // Convert image to base64
+            const response = await fetch(imageUri);
+            const blob = await response.blob();
+            const reader = new FileReader();
+
+            reader.onload = async () => {
+                const base64data = reader.result.split(",")[1];
+
+                try {
+                    const result = await axios.post(`${API_URL}/classify`, {
+                        image: base64data,
+                    });
+
+                    setClassification(result.data.response);
+                } catch (error) {
+                    console.error("Classification error:", error);
+                    Alert.alert("Error", "Failed to classify image");
+                    setClassification(null);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            reader.readAsDataURL(blob);
+        } catch (error) {
+            console.error("Image processing error:", error);
+            Alert.alert("Error", "Failed to process image");
+            setClassification(null);
+            setIsLoading(false);
+        }
     };
 
     return (

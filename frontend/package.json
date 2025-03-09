@@ -12,6 +12,7 @@
     "@expo/vector-icons": "^14.0.4",
     "@react-navigation/bottom-tabs": "^7.2.1",
     "@react-navigation/native": "^7.0.15",
+    "axios": "^1.8.2",
     "expo": "~52.0.37",
     "expo-camera": "~16.0.17",
     "expo-image-picker": "~16.0.6",
@@ -22,7 +23,9 @@
     "react-native-screens": "~4.4.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "@types/react": "~18.3.12",
+    "typescript": "^5.3.3"
   },
   "private": true
 }
