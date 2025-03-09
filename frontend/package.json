@@ -15,6 +15,7 @@
     "axios": "^1.8.2",
     "expo": "~52.0.37",
     "expo-camera": "~16.0.17",
+    "expo-image-manipulator": "^13.0.6",
     "expo-image-picker": "~16.0.6",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",

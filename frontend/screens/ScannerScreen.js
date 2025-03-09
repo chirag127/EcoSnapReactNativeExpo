@@ -11,6 +11,21 @@ import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import axios from "axios";
 import { API_URL } from "../env";
+import * as ImageManipulator from "expo-image-manipulator";
+
+const compressImage = async (uri) => {
+    try {
+        const manipResult = await ImageManipulator.manipulateAsync(
+            uri,
+            [{ resize: { width: 1024 } }],
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+        );
+        return manipResult.uri;
+    } catch (error) {
+        console.error("Image compression error:", error);
+        throw error;
+    }
+};
 
 export default function ScannerScreen() {
     const [image, setImage] = useState(null);
@@ -21,12 +36,16 @@ export default function ScannerScreen() {
         const { status } = await Camera.requestCameraPermissionsAsync();
         if (status === "granted") {
             const result = await ImagePicker.launchCameraAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: ["images"],
                 allowsEditing: true,
                 aspect: [4, 3],
                 quality: 1,
             });
+
+            // Check if the user canceled the image picker
+            // the result is of format { canceled: false, assets: [{ uri: '...' }] }
             if (!result.canceled) {
+                // Set the image state with the selected image URI
                 setImage(result.assets[0].uri);
                 classifyImage(result.assets[0].uri);
             }
@@ -35,13 +54,18 @@ export default function ScannerScreen() {
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ["images"],
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
         });
+
+        // the result is of format { canceled: false, assets: [{ uri: '...' }] }
+        // Check if the user canceled the image picker
         if (!result.canceled) {
+            // Set the image state with the selected image URI
             setImage(result.assets[0].uri);
+
             classifyImage(result.assets[0].uri);
         }
     };
@@ -51,22 +75,24 @@ export default function ScannerScreen() {
             setIsLoading(true);
             setClassification("Processing...");
 
-            // Convert image to base64
-            const response = await fetch(imageUri);
+            // Compress image before processing
+            const compressedUri = await compressImage(imageUri);
+            const response = await fetch(compressedUri);
             const blob = await response.blob();
             const reader = new FileReader();
 
             reader.onload = async () => {
                 const base64data = reader.result.split(",")[1];
-
                 try {
                     const result = await axios.post(`${API_URL}/classify`, {
                         image: base64data,
                     });
-
                     setClassification(result.data.response);
                 } catch (error) {
-                    console.error("Classification error:", error);
+                    console.error(
+                        "Classification error:",
+                        error.response?.data || error.message
+                    );
                     Alert.alert("Error", "Failed to classify image");
                     setClassification(null);
                 } finally {

@@ -8,6 +8,7 @@ import {
     ActivityIndicator,
 } from "react-native";
 import axios from "axios";
+import { API_URL } from "../env";
 
 export default function HistoryScreen() {
     const [history, setHistory] = useState([]);
@@ -22,9 +23,7 @@ export default function HistoryScreen() {
         try {
             setLoading(true);
             setError(null);
-            const response = await axios.get(
-                "http://your-backend-url:5000/api/history"
-            );
+            const response = await axios.get(`${API_URL}/history`);
             setHistory(response.data);
         } catch (err) {
             setError("Failed to load history");

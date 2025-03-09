@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.post("/classify", async (req, res) => {
     try {
-        const { image } = req.body;
+        const { image } = req.body.image; // Assuming the image is sent as a base64 string
         const imageUrl = await uploadToImgur(image);
         const response = await classifyImage(imageUrl);
 

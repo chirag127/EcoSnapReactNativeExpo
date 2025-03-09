@@ -30,6 +30,7 @@ export const classifyImage = async (imageUrl) => {
 
         return response.data.choices[0].message.content;
     } catch (error) {
+        console.error("Classification error:", error);
         throw new Error("Failed to classify image");
     }
 };
