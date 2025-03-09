@@ -7,6 +7,7 @@ import {
     Text,
     ActivityIndicator,
     Dimensions,
+    RefreshControl,
 } from "react-native";
 import axios from "axios";
 import { API_URL } from "../env";
@@ -23,6 +24,7 @@ export default function HistoryScreen() {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         fetchHistory();
@@ -41,6 +43,11 @@ export default function HistoryScreen() {
             setLoading(false);
         }
     };
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        fetchHistory().finally(() => setRefreshing(false));
+    }, []);
 
     const renderItem = ({ item }) => (
         <View style={styles.historyItem}>
@@ -86,6 +93,14 @@ export default function HistoryScreen() {
                 ListEmptyComponent={() => (
                     <Text style={styles.emptyText}>No history available</Text>
                 )}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={["#4CAF50"]}
+                        tintColor="#4CAF50"
+                    />
+                }
             />
         </View>
     );
