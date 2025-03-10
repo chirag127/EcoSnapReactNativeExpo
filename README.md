@@ -2,6 +2,11 @@
 
 EcoSnap is a mobile application that helps users properly classify waste items using AI vision technology. By simply taking a photo or selecting an image, users can instantly determine whether an item is recyclable, compostable, or destined for landfill.
 
+## Download the App
+
+
+- Download for Android - <https://ln5.sync.com/dl/e206bcfe0#xqt9zaha-mstsqdu7-f2h3ahuz-cqqm39e4>
+
 ## Features
 
 -   📸 Take photos or select images from gallery
