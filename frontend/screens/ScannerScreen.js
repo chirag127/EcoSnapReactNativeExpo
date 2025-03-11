@@ -7,13 +7,14 @@ import {
     Image,
     Alert,
     ScrollView,
+    RefreshControl,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import axios from "axios";
 import { API_URL } from "../env";
 import * as ImageManipulator from "expo-image-manipulator";
-import Markdown from 'react-native-markdown-display';
+import Markdown from "react-native-markdown-display";
 
 const compressImage = async (uri) => {
     try {
@@ -33,6 +34,15 @@ export default function ScannerScreen() {
     const [image, setImage] = useState(null);
     const [classification, setClassification] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        // Reset screen state
+        setImage(null);
+        setClassification(null);
+        setRefreshing(false);
+    }, []);
 
     const takePhoto = async () => {
         const { status } = await Camera.requestCameraPermissionsAsync();
@@ -113,8 +123,19 @@ export default function ScannerScreen() {
 
     return (
         <View style={styles.container}>
-            <ScrollView>
-                {image && <Image source={{ uri: image }} style={styles.image} />}
+            <ScrollView
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={["#4CAF50"]}
+                        tintColor="#4CAF50"
+                    />
+                }
+            >
+                {image && (
+                    <Image source={{ uri: image }} style={styles.image} />
+                )}
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.button} onPress={takePhoto}>
                         <Text style={styles.buttonText}>Take Photo</Text>
@@ -136,9 +157,19 @@ export default function ScannerScreen() {
 }
 
 const markdownStyles = {
-    body: { color: '#333', fontSize: 16 },
-    heading1: { fontSize: 24, fontWeight: 'bold', color: '#000', marginVertical: 10 },
-    heading2: { fontSize: 20, fontWeight: 'bold', color: '#000', marginVertical: 8 },
+    body: { color: "#333", fontSize: 16 },
+    heading1: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#000",
+        marginVertical: 10,
+    },
+    heading2: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#000",
+        marginVertical: 8,
+    },
     paragraph: { marginVertical: 8, lineHeight: 22 },
     list: { marginVertical: 8 },
     listItem: { marginVertical: 4 },

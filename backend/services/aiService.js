@@ -12,6 +12,8 @@ export const classifyImage = async (imageUrl) => {
             "https://openrouter.ai/api/v1/chat/completions",
             {
                 model: "meta-llama/llama-3.2-90b-vision-instruct",
+                // model:"x-ai/grok-vision-beta",
+
                 messages: [
                     {
                         role: "user",
