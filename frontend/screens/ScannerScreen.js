@@ -8,6 +8,7 @@ import {
     Alert,
     ScrollView,
     RefreshControl,
+    Clipboard, // Add this import
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
@@ -35,6 +36,7 @@ export default function ScannerScreen() {
     const [classification, setClassification] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
@@ -121,6 +123,12 @@ export default function ScannerScreen() {
         }
     };
 
+    const copyToClipboard = async (text) => {
+        await Clipboard.setString(text);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000); // Reset copied status after 2 seconds
+    };
+
     return (
         <View style={styles.container}>
             <ScrollView
@@ -146,9 +154,18 @@ export default function ScannerScreen() {
                 </View>
                 {classification && (
                     <View style={styles.resultContainer}>
-                        <Markdown style={markdownStyles}>
-                            {classification}
-                        </Markdown>
+                        <TouchableOpacity
+                            onPress={() => copyToClipboard(classification)}
+                        >
+                            <Markdown style={markdownStyles}>
+                                {classification}
+                            </Markdown>
+                            {isCopied && (
+                                <Text style={styles.copiedText}>
+                                    Copied to clipboard!
+                                </Text>
+                            )}
+                        </TouchableOpacity>
                     </View>
                 )}
             </ScrollView>
@@ -213,5 +230,11 @@ const styles = StyleSheet.create({
     },
     resultText: {
         fontSize: 18,
+    },
+    copiedText: {
+        color: "#4CAF50",
+        fontSize: 14,
+        textAlign: "center",
+        marginTop: 5,
     },
 });
