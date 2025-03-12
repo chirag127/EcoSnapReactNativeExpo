@@ -37,6 +37,13 @@ const defaultPrompts = [
         label: "Food Recognition",
         value: "What food items are in this image? Provide estimated nutrition facts.",
     },
+    // What is the brand and model of this item?
+    {
+        id: "7",
+        label: "Brand Recognition",
+        value: "What is the brand and model of this item?",
+    },
+    
 ];
 
 router.get("/", (req, res) => {
