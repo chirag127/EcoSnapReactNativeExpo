@@ -4,7 +4,7 @@ import axios from "axios";
 
 // const groq = new Groq();
 
-export const classifyImage = async (imageUrl) => {
+export const classifyImage = async (imageUrl,prompt) => {
     try {
         console.log("Classifying image:", imageUrl);
 
@@ -20,7 +20,7 @@ export const classifyImage = async (imageUrl) => {
                         content: [
                             {
                                 type: "text",
-                                text: "What is in this image? Classify as recyclable, compostable, or landfill. And provide proper disposal instructions",
+                                text: prompt || "What is in this image? Classify as recyclable, compostable, or landfill. And provide proper disposal instructions",
                             },
                             { type: "image_url", image_url: { url: imageUrl } },
                         ],

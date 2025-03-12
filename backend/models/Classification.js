@@ -9,6 +9,10 @@ const ClassificationSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    prompt: {
+        type: String,
+        required: false,
+    },
     timestamp: {
         type: Date,
         default: Date.now,

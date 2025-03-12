@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import classificationRoutes from "./routes/classification.js";
 import bodyParser from "express";
+import promptsRouter from "./routes/prompts.js";
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ mongoose
     .catch((err) => console.error("MongoDB connection error:", err));
 
 app.use("/api", classificationRoutes);
+app.use("/api/prompts", promptsRouter);
 
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);

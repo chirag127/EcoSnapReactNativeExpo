@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     StyleSheet,
     View,
@@ -8,7 +8,8 @@ import {
     Alert,
     ScrollView,
     RefreshControl,
-    Clipboard, // Add this import
+    Clipboard,
+    TextInput,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
@@ -16,6 +17,7 @@ import axios from "axios";
 import { API_URL } from "../env";
 import * as ImageManipulator from "expo-image-manipulator";
 import Markdown from "react-native-markdown-display";
+import { Picker } from "@react-native-picker/picker";
 
 const compressImage = async (uri) => {
     try {
@@ -37,6 +39,23 @@ export default function ScannerScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
+    const [prompts, setPrompts] = useState([]);
+    const [selectedPrompt, setSelectedPrompt] = useState("1");
+    const [customPrompt, setCustomPrompt] = useState("");
+    const [showCustomPrompt, setShowCustomPrompt] = useState(false);
+
+    useEffect(() => {
+        fetchPrompts();
+    }, []);
+
+    const fetchPrompts = async () => {
+        try {
+            const response = await axios.get(`${API_URL}/prompts`);
+            setPrompts(response.data);
+        } catch (error) {
+            console.error("Failed to fetch prompts:", error);
+        }
+    };
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
@@ -100,6 +119,10 @@ export default function ScannerScreen() {
                 try {
                     const result = await axios.post(`${API_URL}/classify`, {
                         image: base64data,
+                        prompt: showCustomPrompt
+                            ? customPrompt
+                            : prompts.find((p) => p.id === selectedPrompt)
+                                  ?.value,
                     });
                     setClassification(result.data.response);
                 } catch (error) {
@@ -144,6 +167,37 @@ export default function ScannerScreen() {
                 {image && (
                     <Image source={{ uri: image }} style={styles.image} />
                 )}
+
+                <View style={styles.promptContainer}>
+                    <Picker
+                        selectedValue={selectedPrompt}
+                        style={styles.picker}
+                        onValueChange={(itemValue) => {
+                            setSelectedPrompt(itemValue);
+                            setShowCustomPrompt(itemValue === "custom");
+                        }}
+                    >
+                        {prompts.map((prompt) => (
+                            <Picker.Item
+                                key={prompt.id}
+                                label={prompt.label}
+                                value={prompt.id}
+                            />
+                        ))}
+                        <Picker.Item label="Custom Prompt" value="custom" />
+                    </Picker>
+
+                    {showCustomPrompt && (
+                        <TextInput
+                            style={styles.customPromptInput}
+                            placeholder="Enter your custom prompt"
+                            value={customPrompt}
+                            onChangeText={setCustomPrompt}
+                            multiline
+                        />
+                    )}
+                </View>
+
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.button} onPress={takePhoto}>
                         <Text style={styles.buttonText}>Take Photo</Text>
@@ -236,5 +290,24 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textAlign: "center",
         marginTop: 5,
+    },
+    promptContainer: {
+        marginBottom: 20,
+        width: "100%",
+    },
+    picker: {
+        width: "100%",
+        backgroundColor: "#f0f0f0",
+        borderRadius: 5,
+        marginBottom: 10,
+    },
+    customPromptInput: {
+        borderWidth: 1,
+        borderColor: "#ddd",
+        borderRadius: 5,
+        padding: 10,
+        backgroundColor: "#fff",
+        minHeight: 80,
+        textAlignVertical: "top",
     },
 });
