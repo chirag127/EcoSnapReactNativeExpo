@@ -5,7 +5,7 @@ EcoSnap is a mobile application that helps users properly classify waste items u
 ## Download the App
 
 
-- Download for Android - <https://ln5.sync.com/dl/13dcef950#qi6xzxg4-un83d82d-sfkbm6rk-a6vz8qj6>
+- Download for Android - <https://ln5.sync.com/dl/240f67af0#3fnq983e-f3i9mi3s-7n69xgtt-yn7auxvf>
 
 - web - <https://ecosnapreactnativeexpo.netlify.app/>
 -
