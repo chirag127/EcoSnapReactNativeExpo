@@ -11,6 +11,8 @@ EcoSnap is a mobile application that helps users properly classify waste items u
 -
 <https://67cff5019ae79b5119591b58--ecosnapreactnativeexpo.netlify.app/>
 
+<https://frontend-h8iedgdsr-cs-projects-617d8f43.vercel.app>
+
 ## Features
 
 -   📸 Take photos or select images from gallery
