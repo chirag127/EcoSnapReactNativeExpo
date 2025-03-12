@@ -29,6 +29,13 @@ const defaultPrompts = [
         id: "5",
         label: "Landmark Recognition",
         value: "Recognize landmarks and provide historical facts, fun trivia, and nearby points of interest.",
+
+    },
+    // What food items are in this image? Provide estimated nutrition facts.
+    {
+        id: "6",
+        label: "Food Recognition",
+        value: "What food items are in this image? Provide estimated nutrition facts.",
     },
 ];
 
