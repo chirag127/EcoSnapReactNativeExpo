@@ -24,6 +24,8 @@ const defaultPrompts = [
         label: "Environmental Impact",
         value: "What is the environmental impact of this item?",
     },
+    // Recognizes landmarks historical facts, fun trivia, and nearby points of interest
+    
 ];
 
 router.get("/", (req, res) => {
