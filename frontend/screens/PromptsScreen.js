@@ -8,9 +8,12 @@ import {
     TextInput,
     Alert,
     RefreshControl,
+    Modal,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { API_URL } from '../env';
+import { useDebounce } from '../hooks/useDebounce';
 
 export default function PromptsScreen() {
     const [prompts, setPrompts] = useState([]);
@@ -18,6 +21,18 @@ export default function PromptsScreen() {
     const [newValue, setNewValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [editingPrompt, setEditingPrompt] = useState(null);
+    const [editLabel, setEditLabel] = useState('');
+    const [editValue, setEditValue] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
+
+    // Filter prompts based on search query
+    const filteredPrompts = prompts.filter(prompt =>
+        prompt.label.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        prompt.value.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+    );
 
     useEffect(() => {
         fetchPrompts();
@@ -82,9 +97,107 @@ export default function PromptsScreen() {
         );
     };
 
+    const handleEdit = (prompt) => {
+        setEditingPrompt(prompt);
+        setEditLabel(prompt.label);
+        setEditValue(prompt.value);
+        setEditModalVisible(true);
+    };
+
+    const saveEdit = async () => {
+        if (!editLabel.trim() || !editValue.trim()) {
+            Alert.alert('Error', 'Please fill in both fields');
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            const response = await axios.put(`${API_URL}/prompts/${editingPrompt._id}`, {
+                label: editLabel,
+                value: editValue,
+            });
+
+            setPrompts(prompts.map(p =>
+                p._id === editingPrompt._id ? response.data : p
+            ));
+
+            setEditModalVisible(false);
+            setEditingPrompt(null);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to update prompt');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const EditModal = () => (
+        <Modal
+            visible={editModalVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => {
+                setEditModalVisible(false);
+                setEditLabel('');
+                setEditValue('');
+                setEditingPrompt(null);
+            }}
+        >
+            <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Edit Prompt</Text>
+
+                    <TextInput
+                        style={styles.modalInput}
+                        placeholder="Prompt Label"
+                        value={editLabel}
+                        onChangeText={setEditLabel}
+                    />
+
+                    <TextInput
+                        style={[styles.modalInput, styles.multilineInput]}
+                        placeholder="Prompt Value"
+                        value={editValue}
+                        onChangeText={setEditValue}
+                        multiline
+                    />
+
+                    <View style={styles.modalButtons}>
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.cancelButton]}
+                            onPress={() => {
+                                setEditModalVisible(false);
+                                setEditLabel('');
+                                setEditValue('');
+                                setEditingPrompt(null);
+                            }}
+                        >
+                            <Text style={styles.modalButtonText}>Cancel</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.modalButton, styles.saveButton]}
+                            onPress={saveEdit}
+                            disabled={isLoading}
+                        >
+                            <Text style={styles.modalButtonText}>
+                                {isLoading ? 'Saving...' : 'Save'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+
     return (
         <View style={styles.container}>
             <View style={styles.inputContainer}>
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search prompts..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                />
                 <TextInput
                     style={styles.input}
                     placeholder="Prompt Label"
@@ -110,7 +223,7 @@ export default function PromptsScreen() {
             </View>
 
             <FlatList
-                data={prompts}
+                data={filteredPrompts} // Use filtered prompts instead of all prompts
                 keyExtractor={(item) => item._id || item.id}
                 renderItem={({ item }) => (
                     <View style={styles.promptItem}>
@@ -118,12 +231,20 @@ export default function PromptsScreen() {
                             <Text style={styles.label}>{item.label}</Text>
                             <Text style={styles.value}>{item.value}</Text>
                         </View>
-                        <TouchableOpacity
-                            style={styles.deleteButton}
-                            onPress={() => deletePrompt(item._id || item.id)}
-                        >
-                            <Text style={styles.deleteButtonText}>Delete</Text>
-                        </TouchableOpacity>
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity
+                                style={[styles.iconButton, styles.editButton]}
+                                onPress={() => handleEdit(item)}
+                            >
+                                <Ionicons name="pencil" size={20} color="#fff" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.iconButton, styles.deleteButton]}
+                                onPress={() => deletePrompt(item._id || item.id)}
+                            >
+                                <Ionicons name="trash" size={20} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 )}
                 refreshControl={
@@ -135,6 +256,7 @@ export default function PromptsScreen() {
                     />
                 }
             />
+            <EditModal />
         </View>
     );
 }
@@ -191,5 +313,80 @@ const styles = StyleSheet.create({
     },
     deleteButtonText: {
         color: '#fff',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 20,
+        width: '90%',
+        maxHeight: '80%',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    modalInput: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 5,
+        padding: 10,
+        marginBottom: 15,
+    },
+    multilineInput: {
+        height: 100,
+        textAlignVertical: 'top',
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20,
+    },
+    modalButton: {
+        flex: 1,
+        padding: 15,
+        borderRadius: 5,
+        marginHorizontal: 5,
+        alignItems: 'center',
+    },
+    cancelButton: {
+        backgroundColor: '#ff4444',
+    },
+    saveButton: {
+        backgroundColor: '#4CAF50',
+    },
+    modalButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconButton: {
+        padding: 8,
+        borderRadius: 5,
+        marginLeft: 10,
+    },
+    editButton: {
+        backgroundColor: '#2196F3',
+    },
+    deleteButton: {
+        backgroundColor: '#ff4444',
+    },
+    searchInput: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 5,
+        padding: 10,
+        marginBottom: 15,
+        backgroundColor: '#fff',
     },
 });

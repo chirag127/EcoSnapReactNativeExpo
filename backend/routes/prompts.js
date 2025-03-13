@@ -104,4 +104,24 @@ router.delete("/:id", async (req, res) => {
     }
 });
 
+// Add new PUT route for editing prompts
+router.put("/:id", async (req, res) => {
+    try {
+        const { label, value } = req.body;
+        const updatedPrompt = await Prompt.findByIdAndUpdate(
+            req.params.id,
+            { label, value },
+            { new: true } // Returns the updated document
+        );
+
+        if (!updatedPrompt) {
+            return res.status(404).json({ error: "Prompt not found" });
+        }
+
+        res.json(updatedPrompt);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
