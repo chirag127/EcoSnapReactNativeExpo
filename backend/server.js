@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import classificationRoutes from "./routes/classification.js";
-import bodyParser from "express";
+
 import promptsRouter from "./routes/prompts.js";
 
 dotenv.config();
@@ -16,6 +16,8 @@ app.use(
         origin: "*",
         methods: ["GET", "POST",`PUT`, `DELETE`],
         allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+        exposedHeaders: ["Access-Control-Allow-Origin"],
     })
 );
 
