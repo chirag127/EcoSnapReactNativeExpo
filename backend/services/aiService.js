@@ -7,6 +7,7 @@ import axios from "axios";
 export const classifyImage = async (imageUrl,prompt) => {
     try {
         console.log("Classifying image:", imageUrl);
+        console.log("Prompt:", prompt);
 
         const response = await axios.post(
             "https://openrouter.ai/api/v1/chat/completions",

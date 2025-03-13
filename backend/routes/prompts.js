@@ -1,4 +1,5 @@
 import express from "express";
+import Prompt from "../models/Prompt.js";
 const router = express.Router();
 
 const defaultPrompts = [
@@ -64,9 +65,40 @@ const defaultPrompts = [
 
 ];
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
     try {
-        res.json(defaultPrompts);
+        const prompts = await Prompt.find();
+        // If no prompts exist, initialize with default prompts
+        if (prompts.length === 0) {
+            await Prompt.insertMany(defaultPrompts);
+            return res.json(defaultPrompts);
+        }
+        res.json(prompts);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post("/", async (req, res) => {
+    try {
+        const { label, value } = req.body;
+        const newPrompt = await Prompt.create({
+            label,
+            value
+        });
+        res.status(201).json(newPrompt);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.delete("/:id", async (req, res) => {
+    try {
+        const prompt = await Prompt.findByIdAndDelete(req.params.id);
+        if (!prompt) {
+            return res.status(404).json({ error: "Prompt not found" });
+        }
+        res.json({ message: "Prompt deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

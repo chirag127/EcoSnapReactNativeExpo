@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import ScannerScreen from "./screens/ScannerScreen";
 import HistoryScreen from "./screens/HistoryScreen";
+import PromptsScreen from "./screens/PromptsScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -19,6 +20,8 @@ export default function App() {
                             iconName = focused ? "camera" : "camera-outline";
                         } else if (route.name === "History") {
                             iconName = focused ? "time" : "time-outline";
+                        } else if (route.name === "Prompts") {
+                            iconName = focused ? "list" : "list-outline";
                         }
                         return (
                             <Ionicons
@@ -32,6 +35,7 @@ export default function App() {
             >
                 <Tab.Screen name="Scanner" component={ScannerScreen} />
                 <Tab.Screen name="History" component={HistoryScreen} />
+                <Tab.Screen name="Prompts" component={PromptsScreen} />
             </Tab.Navigator>
         </NavigationContainer>
     );

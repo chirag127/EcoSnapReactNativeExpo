@@ -24,7 +24,7 @@ const compressImage = async (uri) => {
         const manipResult = await ImageManipulator.manipulateAsync(
             uri,
             [{ resize: { width: 1024 } }],
-            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+            { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
         );
         return manipResult.uri;
     } catch (error) {
@@ -40,7 +40,7 @@ export default function ScannerScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [prompts, setPrompts] = useState([]);
-    const [selectedPrompt, setSelectedPrompt] = useState("1");
+    const [selectedPrompt, setSelectedPrompt] = useState("custom"); // Changed initial value
     const [customPrompt, setCustomPrompt] = useState("");
     const [showCustomPrompt, setShowCustomPrompt] = useState(false);
 
@@ -121,8 +121,7 @@ export default function ScannerScreen() {
                         image: base64data,
                         prompt: showCustomPrompt
                             ? customPrompt
-                            : prompts.find((p) => p.id === selectedPrompt)
-                                  ?.value,
+                            : prompts.find((p) => p._id === selectedPrompt)?.value || "",
                     });
                     setClassification(result.data.response);
                 } catch (error) {
@@ -179,12 +178,16 @@ export default function ScannerScreen() {
                     >
                         {prompts.map((prompt) => (
                             <Picker.Item
-                                key={prompt.id}
+                                key={prompt._id || String(Math.random())}  // Use MongoDB _id or fallback
                                 label={prompt.label}
-                                value={prompt.id}
+                                value={prompt._id}  // Use MongoDB _id here as well
                             />
                         ))}
-                        <Picker.Item label="Custom Prompt" value="custom" />
+                        <Picker.Item
+                            key="custom"
+                            label="Custom Prompt"
+                            value="custom"
+                        />
                     </Picker>
 
                     {showCustomPrompt && (
