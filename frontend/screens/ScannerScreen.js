@@ -40,12 +40,24 @@ export default function ScannerScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [prompts, setPrompts] = useState([]);
-    const [selectedPrompt, setSelectedPrompt] = useState("custom"); // Changed initial value
+    const [selectedPrompt, setSelectedPrompt] = useState("custom");
     const [customPrompt, setCustomPrompt] = useState("");
     const [showCustomPrompt, setShowCustomPrompt] = useState(false);
 
     useEffect(() => {
         fetchPrompts();
+    }, []);
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        // Reset all states
+        setImage(null);
+        setClassification(null);
+        setIsCopied(false);
+        // Fetch fresh prompts
+        fetchPrompts().finally(() => {
+            setRefreshing(false);
+        });
     }, []);
 
     const fetchPrompts = async () => {
@@ -56,14 +68,6 @@ export default function ScannerScreen() {
             console.error("Failed to fetch prompts:", error);
         }
     };
-
-    const onRefresh = React.useCallback(() => {
-        setRefreshing(true);
-        // Reset screen state
-        setImage(null);
-        setClassification(null);
-        setRefreshing(false);
-    }, []);
 
     const takePhoto = async () => {
         const { status } = await Camera.requestCameraPermissionsAsync();
@@ -154,6 +158,7 @@ export default function ScannerScreen() {
     return (
         <View style={styles.container}>
             <ScrollView
+                contentContainerStyle={styles.scrollContent}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
@@ -312,5 +317,10 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
         minHeight: 80,
         textAlignVertical: "top",
+    },
+    scrollContent: {
+        flexGrow: 1,
+        alignItems: 'center',
+        paddingBottom: 20,
     },
 });
