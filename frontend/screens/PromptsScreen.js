@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     TextInput,
     Alert,
+    RefreshControl,
 } from 'react-native';
 import axios from 'axios';
 import { API_URL } from '../env';
@@ -16,6 +17,7 @@ export default function PromptsScreen() {
     const [newLabel, setNewLabel] = useState('');
     const [newValue, setNewValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         fetchPrompts();
@@ -29,6 +31,12 @@ export default function PromptsScreen() {
             Alert.alert('Error', 'Failed to fetch prompts');
         }
     };
+
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        fetchPrompts()
+            .finally(() => setRefreshing(false));
+    }, []);
 
     const addPrompt = async () => {
         if (!newLabel.trim() || !newValue.trim()) {
@@ -118,6 +126,14 @@ export default function PromptsScreen() {
                         </TouchableOpacity>
                     </View>
                 )}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={["#4CAF50"]}
+                        tintColor="#4CAF50"
+                    />
+                }
             />
         </View>
     );
