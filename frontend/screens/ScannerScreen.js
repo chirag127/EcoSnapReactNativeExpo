@@ -10,6 +10,7 @@ import {
     RefreshControl,
     Clipboard,
     TextInput,
+    Modal,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
@@ -20,6 +21,7 @@ import { API_URL } from "../env";
 import * as ImageManipulator from "expo-image-manipulator";
 import Markdown from "react-native-markdown-display";
 import { Picker } from "@react-native-picker/picker";
+import Slider from '@react-native-community/slider';
 
 const compressImage = async (uri) => {
     try {
@@ -46,6 +48,8 @@ export default function ScannerScreen() {
     const [customPrompt, setCustomPrompt] = useState("");
     const [showCustomPrompt, setShowCustomPrompt] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [speechRate, setSpeechRate] = useState(1.0);
+    const [showSpeechSettings, setShowSpeechSettings] = useState(false);
 
     useEffect(() => {
         fetchPrompts();
@@ -168,6 +172,7 @@ export default function ScannerScreen() {
             } else {
                 setIsSpeaking(true);
                 await Speech.speak(text, {
+                    rate: speechRate,
                     onDone: () => setIsSpeaking(false),
                     onError: (error) => {
                         console.error("Speech error:", error);
@@ -187,6 +192,45 @@ export default function ScannerScreen() {
             Speech.stop();
         };
     }, []);
+
+    const SpeechSettingsModal = () => (
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={showSpeechSettings}
+            onRequestClose={() => setShowSpeechSettings(false)}
+        >
+            <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Speech Settings</Text>
+
+                    <View style={styles.settingRow}>
+                        <Text style={styles.settingLabel}>
+                            Speed: {speechRate.toFixed(1)}x
+                        </Text>
+                        <Slider
+                            style={styles.slider}
+                            minimumValue={0.5}
+                            maximumValue={4.0}
+                            step={0.1}
+                            value={speechRate}
+                            onValueChange={setSpeechRate}
+                            minimumTrackTintColor="#4CAF50"
+                            maximumTrackTintColor="#000000"
+                            thumbTintColor="#4CAF50"
+                        />
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.closeButton}
+                        onPress={() => setShowSpeechSettings(false)}
+                    >
+                        <Text style={styles.closeButtonText}>Close</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
 
     return (
         <View style={styles.container}>
@@ -262,6 +306,12 @@ export default function ScannerScreen() {
                                 )}
                             </TouchableOpacity>
                             <TouchableOpacity
+                                onPress={() => setShowSpeechSettings(true)}
+                                style={styles.iconButton}
+                            >
+                                <Ionicons name="settings-outline" size={20} color="#4CAF50" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
                                 onPress={() => handleSpeak(classification)}
                                 style={styles.iconButton}
                             >
@@ -278,6 +328,7 @@ export default function ScannerScreen() {
                     </View>
                 )}
             </ScrollView>
+            <SpeechSettingsModal />
         </View>
     );
 }
@@ -386,5 +437,56 @@ const styles = StyleSheet.create({
         color: '#4CAF50',
         fontSize: 12,
         marginTop: 4,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 20,
+        width: '80%',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        color: '#333',
+    },
+    settingRow: {
+        width: '100%',
+        marginBottom: 20,
+    },
+    settingLabel: {
+        fontSize: 16,
+        marginBottom: 10,
+        color: '#666',
+    },
+    slider: {
+        width: '100%',
+        height: 40,
+    },
+    closeButton: {
+        backgroundColor: '#4CAF50',
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 10,
+    },
+    closeButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
