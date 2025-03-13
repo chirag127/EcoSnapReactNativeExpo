@@ -43,7 +43,25 @@ const defaultPrompts = [
         label: "Brand Recognition",
         value: "What is the brand and model of this item?",
     },
-    
+    // What plant is in this image? Identify any disease or pest.What plant is in this image? Identify any disease or pest.
+    {
+        id: "8",
+        label: "Plant Recognition",
+        value: "What plant is in this image? Identify any disease or pest.",
+    },
+    // What animal is in this image? Provide fun facts.
+    {
+        id: "9",
+        label: "Animal Recognition",
+        value: "What animal is in this image? Provide fun facts.",
+    },
+    // What is the breed of this dog? Provide fun facts.
+    {
+        id: "10",
+        label: "Dog Breed Recognition",
+        value: "What is the breed of this dog? Provide fun facts.",
+    },
+
 ];
 
 router.get("/", (req, res) => {
