@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -14,6 +14,64 @@ import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { API_URL } from '../env';
 import { useDebounce } from '../hooks/useDebounce';
+
+const EditModal = ({
+    visible,
+    onClose,
+    onSave,
+    label,
+    value,
+    onLabelChange,
+    onValueChange,
+    isLoading
+}) => (
+    <Modal
+        visible={visible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={onClose}
+    >
+        <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Edit Prompt</Text>
+
+                <TextInput
+                    style={styles.modalInput}
+                    placeholder="Prompt Label"
+                    value={label}
+                    onChangeText={onLabelChange}
+                />
+
+                <TextInput
+                    style={[styles.modalInput, styles.multilineInput]}
+                    placeholder="Prompt Value"
+                    value={value}
+                    onChangeText={onValueChange}
+                    multiline
+                />
+
+                <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                        style={[styles.modalButton, styles.cancelButton]}
+                        onPress={onClose}
+                    >
+                        <Text style={styles.modalButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.modalButton, styles.saveButton]}
+                        onPress={onSave}
+                        disabled={isLoading}
+                    >
+                        <Text style={styles.modalButtonText}>
+                            {isLoading ? 'Saving...' : 'Save'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>
+    </Modal>
+);
 
 export default function PromptsScreen() {
     const [prompts, setPrompts] = useState([]);
@@ -130,64 +188,20 @@ export default function PromptsScreen() {
         }
     };
 
-    const EditModal = () => (
-        <Modal
-            visible={editModalVisible}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={() => {
-                setEditModalVisible(false);
-                setEditLabel('');
-                setEditValue('');
-                setEditingPrompt(null);
-            }}
-        >
-            <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                    <Text style={styles.modalTitle}>Edit Prompt</Text>
+    const handleClose = useCallback(() => {
+        setEditModalVisible(false);
+        setEditLabel('');
+        setEditValue('');
+        setEditingPrompt(null);
+    }, []);
 
-                    <TextInput
-                        style={styles.modalInput}
-                        placeholder="Prompt Label"
-                        value={editLabel}
-                        onChangeText={setEditLabel}
-                    />
+    const handleLabelChange = useCallback((text) => {
+        setEditLabel(text);
+    }, []);
 
-                    <TextInput
-                        style={[styles.modalInput, styles.multilineInput]}
-                        placeholder="Prompt Value"
-                        value={editValue}
-                        onChangeText={setEditValue}
-                        multiline
-                    />
-
-                    <View style={styles.modalButtons}>
-                        <TouchableOpacity
-                            style={[styles.modalButton, styles.cancelButton]}
-                            onPress={() => {
-                                setEditModalVisible(false);
-                                setEditLabel('');
-                                setEditValue('');
-                                setEditingPrompt(null);
-                            }}
-                        >
-                            <Text style={styles.modalButtonText}>Cancel</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.modalButton, styles.saveButton]}
-                            onPress={saveEdit}
-                            disabled={isLoading}
-                        >
-                            <Text style={styles.modalButtonText}>
-                                {isLoading ? 'Saving...' : 'Save'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-        </Modal>
-    );
+    const handleValueChange = useCallback((text) => {
+        setEditValue(text);
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -256,7 +270,16 @@ export default function PromptsScreen() {
                     />
                 }
             />
-            <EditModal />
+            <EditModal
+                visible={editModalVisible}
+                onClose={handleClose}
+                onSave={saveEdit}
+                label={editLabel}
+                value={editValue}
+                onLabelChange={handleLabelChange}
+                onValueChange={handleValueChange}
+                isLoading={isLoading}
+            />
         </View>
     );
 }
