@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
+import * as Speech from 'expo-speech';
+import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { API_URL } from "../env";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -43,6 +45,7 @@ export default function ScannerScreen() {
     const [selectedPrompt, setSelectedPrompt] = useState("custom");
     const [customPrompt, setCustomPrompt] = useState("");
     const [showCustomPrompt, setShowCustomPrompt] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
 
     useEffect(() => {
         fetchPrompts();
@@ -155,6 +158,36 @@ export default function ScannerScreen() {
         setTimeout(() => setIsCopied(false), 2000); // Reset copied status after 2 seconds
     };
 
+    const handleSpeak = async (text) => {
+        try {
+            const isSpeechInProgress = await Speech.isSpeakingAsync();
+
+            if (isSpeechInProgress) {
+                await Speech.stop();
+                setIsSpeaking(false);
+            } else {
+                setIsSpeaking(true);
+                await Speech.speak(text, {
+                    onDone: () => setIsSpeaking(false),
+                    onError: (error) => {
+                        console.error("Speech error:", error);
+                        setIsSpeaking(false);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Speech error:", error);
+            Alert.alert("Error", "Failed to start text-to-speech");
+            setIsSpeaking(false);
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            Speech.stop();
+        };
+    }, []);
+
     return (
         <View style={styles.container}>
             <ScrollView
@@ -216,18 +249,32 @@ export default function ScannerScreen() {
                 </View>
                 {classification && (
                     <View style={styles.resultContainer}>
-                        <TouchableOpacity
-                            onPress={() => copyToClipboard(classification)}
-                        >
-                            <Markdown style={markdownStyles}>
-                                {classification}
-                            </Markdown>
-                            {isCopied && (
-                                <Text style={styles.copiedText}>
-                                    Copied to clipboard!
-                                </Text>
-                            )}
-                        </TouchableOpacity>
+                        <View style={styles.resultHeader}>
+                            <TouchableOpacity
+                                onPress={() => copyToClipboard(classification)}
+                                style={styles.iconButton}
+                            >
+                                <Ionicons name="copy-outline" size={24} color="#4CAF50" />
+                                {isCopied && (
+                                    <Text style={styles.copiedText}>
+                                        Copied!
+                                    </Text>
+                                )}
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => handleSpeak(classification)}
+                                style={styles.iconButton}
+                            >
+                                <Ionicons
+                                    name={isSpeaking ? "volume-high" : "volume-medium-outline"}
+                                    size={24}
+                                    color="#4CAF50"
+                                />
+                            </TouchableOpacity>
+                        </View>
+                        <Markdown style={markdownStyles}>
+                            {classification}
+                        </Markdown>
                     </View>
                 )}
             </ScrollView>
@@ -322,5 +369,22 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         alignItems: 'center',
         paddingBottom: 20,
+    },
+    resultHeader: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        padding: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+    },
+    iconButton: {
+        padding: 8,
+        marginLeft: 16,
+        alignItems: 'center',
+    },
+    copiedText: {
+        color: '#4CAF50',
+        fontSize: 12,
+        marginTop: 4,
     },
 });
