@@ -10,6 +10,7 @@ import {
     Alert,
     Modal,
     Image,
+    ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
@@ -215,7 +216,7 @@ export default function AdminScreen() {
                         </TouchableOpacity>
 
                         {selectedItem && (
-                            <>
+                            <ScrollView>
                                 <Image
                                     source={{ uri: selectedItem.imageUrl }}
                                     style={styles.modalImage}
@@ -229,7 +230,7 @@ export default function AdminScreen() {
                                 <Markdown style={markdownStyles}>
                                     {selectedItem.response}
                                 </Markdown>
-                            </>
+                            </ScrollView>
                         )}
                     </View>
                 </View>
