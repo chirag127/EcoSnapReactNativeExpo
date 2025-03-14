@@ -1,6 +1,7 @@
 import express from "express";
 import Prompt from "../models/Prompt.js";
 import { auth } from "../middleware/auth.js";
+import { isAdmin } from "../middleware/admin.js";
 
 const router = express.Router();
 
@@ -126,6 +127,16 @@ router.put("/:id", auth, async (req, res) => {
         }
 
         res.json(updatedPrompt);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/admin/all-prompts", auth, isAdmin, async (req, res) => {
+    try {
+        const prompts = await Prompt.find({})
+            .populate('user', 'name email');
+        res.json(prompts);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

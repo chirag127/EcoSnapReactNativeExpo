@@ -8,6 +8,7 @@ import ScannerScreen from "./screens/ScannerScreen";
 import HistoryScreen from "./screens/HistoryScreen";
 import PromptsScreen from "./screens/PromptsScreen";
 import AuthScreen from "./screens/AuthScreen";
+import AdminScreen from "./screens/AdminScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -33,6 +34,8 @@ function AppContent() {
                         iconName = focused ? "time" : "time-outline";
                     } else if (route.name === "Prompts") {
                         iconName = focused ? "list" : "list-outline";
+                    } else if (route.name === "Admin") {
+                        iconName = focused ? "shield" : "shield-outline";
                     }
                     return (
                         <Ionicons name={iconName} size={size} color={color} />
@@ -55,6 +58,9 @@ function AppContent() {
             <Tab.Screen name="Scanner" component={ScannerScreen} />
             <Tab.Screen name="History" component={HistoryScreen} />
             <Tab.Screen name="Prompts" component={PromptsScreen} />
+            {user.isAdmin && (
+                <Tab.Screen name="Admin" component={AdminScreen} />
+            )}
         </Tab.Navigator>
     );
 }

@@ -3,6 +3,7 @@ import { uploadToFreeImageHost } from "../services/imageService.js";
 import { classifyImage } from "../services/aiService.js";
 import Classification from "../models/Classification.js";
 import { auth } from "../middleware/auth.js";
+import { isAdmin } from "../middleware/admin.js";
 
 const router = express.Router();
 
@@ -33,6 +34,21 @@ router.get("/history", auth, async (req, res) => {
         const history = await Classification.find({ user: req.user._id })
             .sort({ timestamp: -1 })
             .limit(50);
+        res.json(history);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get("/admin/all-history", auth, isAdmin, async (req, res) => {
+    try {
+        console.log("Fetching all history...");
+        const history = await Classification.find({})
+            .sort({ timestamp: -1 })
+            .populate('user', 'name email')
+            .limit(100);
+
+        console.log(history);
         res.json(history);
     } catch (error) {
         res.status(500).json({ error: error.message });
