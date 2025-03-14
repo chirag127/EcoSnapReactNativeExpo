@@ -14,14 +14,15 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
-import * as Speech from 'expo-speech';
+import * as Speech from "expo-speech";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { API_URL } from "../env";
 import * as ImageManipulator from "expo-image-manipulator";
 import Markdown from "react-native-markdown-display";
 import { Picker } from "@react-native-picker/picker";
-import Slider from '@react-native-community/slider';
+import Slider from "@react-native-community/slider";
+import { useAuth } from "../context/AuthContext";
 
 const compressImage = async (uri) => {
     try {
@@ -50,6 +51,13 @@ export default function ScannerScreen() {
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [speechRate, setSpeechRate] = useState(1.0);
     const [showSpeechSettings, setShowSpeechSettings] = useState(false);
+    const { logout } = useAuth();
+
+    const handleAuthError = () => {
+        Alert.alert("Session Expired", "Please log in again", [
+            { text: "OK", onPress: () => logout() },
+        ]);
+    };
 
     useEffect(() => {
         fetchPrompts();
@@ -72,7 +80,11 @@ export default function ScannerScreen() {
             const response = await axios.get(`${API_URL}/prompts`);
             setPrompts(response.data);
         } catch (error) {
-            console.error("Failed to fetch prompts:", error);
+            if (error.response?.status === 401) {
+                handleAuthError();
+            } else {
+                console.error("Failed to fetch prompts:", error);
+            }
         }
     };
 
@@ -132,16 +144,21 @@ export default function ScannerScreen() {
                         image: base64data,
                         prompt: showCustomPrompt
                             ? customPrompt
-                            : prompts.find((p) => p._id === selectedPrompt)?.value || "",
+                            : prompts.find((p) => p._id === selectedPrompt)
+                                  ?.value || "",
                     });
                     setClassification(result.data.response);
                 } catch (error) {
-                    console.error(
-                        "Classification error:",
-                        error.response?.data || error.message
-                    );
-                    Alert.alert("Error", "Failed to classify image");
-                    setClassification(null);
+                    if (error.response?.status === 401) {
+                        handleAuthError();
+                    } else {
+                        console.error(
+                            "Classification error:",
+                            error.response?.data || error.message
+                        );
+                        Alert.alert("Error", "Failed to classify image");
+                        setClassification(null);
+                    }
                 } finally {
                     setIsLoading(false);
                 }
@@ -177,7 +194,7 @@ export default function ScannerScreen() {
                     onError: (error) => {
                         console.error("Speech error:", error);
                         setIsSpeaking(false);
-                    }
+                    },
                 });
             }
         } catch (error) {
@@ -260,9 +277,9 @@ export default function ScannerScreen() {
                     >
                         {prompts.map((prompt) => (
                             <Picker.Item
-                                key={prompt._id || String(Math.random())}  // Use MongoDB _id or fallback
+                                key={prompt._id || String(Math.random())} // Use MongoDB _id or fallback
                                 label={prompt.label}
-                                value={prompt._id}  // Use MongoDB _id here as well
+                                value={prompt._id} // Use MongoDB _id here as well
                             />
                         ))}
                         <Picker.Item
@@ -298,7 +315,11 @@ export default function ScannerScreen() {
                                 onPress={() => copyToClipboard(classification)}
                                 style={styles.iconButton}
                             >
-                                <Ionicons name="copy-outline" size={24} color="#4CAF50" />
+                                <Ionicons
+                                    name="copy-outline"
+                                    size={24}
+                                    color="#4CAF50"
+                                />
                                 {isCopied && (
                                     <Text style={styles.copiedText}>
                                         Copied!
@@ -309,14 +330,22 @@ export default function ScannerScreen() {
                                 onPress={() => setShowSpeechSettings(true)}
                                 style={styles.iconButton}
                             >
-                                <Ionicons name="settings-outline" size={20} color="#4CAF50" />
+                                <Ionicons
+                                    name="settings-outline"
+                                    size={20}
+                                    color="#4CAF50"
+                                />
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => handleSpeak(classification)}
                                 style={styles.iconButton}
                             >
                                 <Ionicons
-                                    name={isSpeaking ? "volume-high" : "volume-medium-outline"}
+                                    name={
+                                        isSpeaking
+                                            ? "volume-high"
+                                            : "volume-medium-outline"
+                                    }
                                     size={24}
                                     color="#4CAF50"
                                 />
@@ -418,75 +447,75 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
-        alignItems: 'center',
+        alignItems: "center",
         paddingBottom: 20,
     },
     resultHeader: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
+        flexDirection: "row",
+        justifyContent: "flex-end",
         padding: 8,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: "#eee",
     },
     iconButton: {
         padding: 8,
         marginLeft: 16,
-        alignItems: 'center',
+        alignItems: "center",
     },
     copiedText: {
-        color: '#4CAF50',
+        color: "#4CAF50",
         fontSize: 12,
         marginTop: 4,
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: "center",
+        alignItems: "center",
     },
     modalContent: {
-        backgroundColor: 'white',
+        backgroundColor: "white",
         borderRadius: 20,
         padding: 20,
-        width: '80%',
-        alignItems: 'center',
-        shadowColor: '#000',
+        width: "80%",
+        alignItems: "center",
+        shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: 2
+            height: 2,
         },
         shadowOpacity: 0.25,
         shadowRadius: 4,
-        elevation: 5
+        elevation: 5,
     },
     modalTitle: {
         fontSize: 20,
-        fontWeight: 'bold',
+        fontWeight: "bold",
         marginBottom: 20,
-        color: '#333',
+        color: "#333",
     },
     settingRow: {
-        width: '100%',
+        width: "100%",
         marginBottom: 20,
     },
     settingLabel: {
         fontSize: 16,
         marginBottom: 10,
-        color: '#666',
+        color: "#666",
     },
     slider: {
-        width: '100%',
+        width: "100%",
         height: 40,
     },
     closeButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: "#4CAF50",
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 10,
     },
     closeButtonText: {
-        color: 'white',
+        color: "white",
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: "bold",
     },
 });

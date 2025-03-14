@@ -6,12 +6,13 @@ import {
     Image,
     Text,
     ActivityIndicator,
-    Dimensions,
     RefreshControl,
+    Alert,
 } from "react-native";
 import axios from "axios";
 import { API_URL } from "../env";
 import Markdown from "react-native-markdown-display";
+import { useAuth } from "../context/AuthContext";
 
 const getWasteColor = (response) => {
     const text = response.toLowerCase();
@@ -26,10 +27,7 @@ export default function HistoryScreen() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
-
-    useEffect(() => {
-        fetchHistory();
-    }, []);
+    const { logout } = useAuth();
 
     const fetchHistory = async () => {
         try {
@@ -38,12 +36,22 @@ export default function HistoryScreen() {
             const response = await axios.get(`${API_URL}/history`);
             setHistory(response.data);
         } catch (err) {
-            setError("Failed to load history");
-            console.error(err);
+            if (err.response?.status === 401) {
+                Alert.alert("Session Expired", "Please log in again", [
+                    { text: "OK", onPress: () => logout() },
+                ]);
+            } else {
+                setError("Failed to load history");
+                console.error(err);
+            }
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchHistory();
+    }, []);
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);

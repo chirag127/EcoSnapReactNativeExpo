@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
     View,
     Text,
@@ -9,11 +9,12 @@ import {
     Alert,
     RefreshControl,
     Modal,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
-import { API_URL } from '../env';
-import { useDebounce } from '../hooks/useDebounce';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
+import { API_URL } from "../env";
+import { useDebounce } from "../hooks/useDebounce";
+import { useAuth } from "../context/AuthContext";
 
 const EditModal = ({
     visible,
@@ -23,7 +24,7 @@ const EditModal = ({
     value,
     onLabelChange,
     onValueChange,
-    isLoading
+    isLoading,
 }) => (
     <Modal
         visible={visible}
@@ -64,7 +65,7 @@ const EditModal = ({
                         disabled={isLoading}
                     >
                         <Text style={styles.modalButtonText}>
-                            {isLoading ? 'Saving...' : 'Save'}
+                            {isLoading ? "Saving..." : "Save"}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -75,21 +76,33 @@ const EditModal = ({
 
 export default function PromptsScreen() {
     const [prompts, setPrompts] = useState([]);
-    const [newLabel, setNewLabel] = useState('');
-    const [newValue, setNewValue] = useState('');
+    const [newLabel, setNewLabel] = useState("");
+    const [newValue, setNewValue] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [editingPrompt, setEditingPrompt] = useState(null);
-    const [editLabel, setEditLabel] = useState('');
-    const [editValue, setEditValue] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [editLabel, setEditLabel] = useState("");
+    const [editValue, setEditValue] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
     const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
+    const { logout } = useAuth();
+
+    const handleAuthError = () => {
+        Alert.alert("Session Expired", "Please log in again", [
+            { text: "OK", onPress: () => logout() },
+        ]);
+    };
 
     // Filter prompts based on search query
-    const filteredPrompts = prompts.filter(prompt =>
-        prompt.label.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-        prompt.value.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+    const filteredPrompts = prompts.filter(
+        (prompt) =>
+            prompt.label
+                .toLowerCase()
+                .includes(debouncedSearchQuery.toLowerCase()) ||
+            prompt.value
+                .toLowerCase()
+                .includes(debouncedSearchQuery.toLowerCase())
     );
 
     useEffect(() => {
@@ -101,33 +114,40 @@ export default function PromptsScreen() {
             const response = await axios.get(`${API_URL}/prompts`);
             setPrompts(response.data);
         } catch (error) {
-            Alert.alert('Error', 'Failed to fetch prompts');
+            if (error.response?.status === 401) {
+                handleAuthError();
+            } else {
+                Alert.alert("Error", "Failed to fetch prompts");
+            }
         }
     };
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
-        fetchPrompts()
-            .finally(() => setRefreshing(false));
+        fetchPrompts().finally(() => setRefreshing(false));
     }, []);
 
     const addPrompt = async () => {
         if (!newLabel.trim() || !newValue.trim()) {
-            Alert.alert('Error', 'Please fill in both fields');
+            Alert.alert("Error", "Please fill in both fields");
             return;
         }
 
         try {
             setIsLoading(true);
-            await axios.post(`${API_URL}/prompts`, {
+            const response = await axios.post(`${API_URL}/prompts`, {
                 label: newLabel,
                 value: newValue,
             });
-            setNewLabel('');
-            setNewValue('');
-            fetchPrompts();
+            setNewLabel("");
+            setNewValue("");
+            setPrompts([...prompts, response.data]);
         } catch (error) {
-            Alert.alert('Error', 'Failed to add prompt');
+            if (error.response?.status === 401) {
+                handleAuthError();
+            } else {
+                Alert.alert("Error", "Failed to add prompt");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -135,19 +155,23 @@ export default function PromptsScreen() {
 
     const deletePrompt = async (id) => {
         Alert.alert(
-            'Confirm Delete',
-            'Are you sure you want to delete this prompt?',
+            "Confirm Delete",
+            "Are you sure you want to delete this prompt?",
             [
-                { text: 'Cancel', style: 'cancel' },
+                { text: "Cancel", style: "cancel" },
                 {
-                    text: 'Delete',
-                    style: 'destructive',
+                    text: "Delete",
+                    style: "destructive",
                     onPress: async () => {
                         try {
                             await axios.delete(`${API_URL}/prompts/${id}`);
-                            fetchPrompts();
+                            setPrompts(prompts.filter((p) => p._id !== id));
                         } catch (error) {
-                            Alert.alert('Error', 'Failed to delete prompt');
+                            if (error.response?.status === 401) {
+                                handleAuthError();
+                            } else {
+                                Alert.alert("Error", "Failed to delete prompt");
+                            }
                         }
                     },
                 },
@@ -164,25 +188,34 @@ export default function PromptsScreen() {
 
     const saveEdit = async () => {
         if (!editLabel.trim() || !editValue.trim()) {
-            Alert.alert('Error', 'Please fill in both fields');
+            Alert.alert("Error", "Please fill in both fields");
             return;
         }
 
         try {
             setIsLoading(true);
-            const response = await axios.put(`${API_URL}/prompts/${editingPrompt._id}`, {
-                label: editLabel,
-                value: editValue,
-            });
+            const response = await axios.put(
+                `${API_URL}/prompts/${editingPrompt._id}`,
+                {
+                    label: editLabel,
+                    value: editValue,
+                }
+            );
 
-            setPrompts(prompts.map(p =>
-                p._id === editingPrompt._id ? response.data : p
-            ));
+            setPrompts(
+                prompts.map((p) =>
+                    p._id === editingPrompt._id ? response.data : p
+                )
+            );
 
             setEditModalVisible(false);
             setEditingPrompt(null);
         } catch (error) {
-            Alert.alert('Error', 'Failed to update prompt');
+            if (error.response?.status === 401) {
+                handleAuthError();
+            } else {
+                Alert.alert("Error", "Failed to update prompt");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -190,8 +223,8 @@ export default function PromptsScreen() {
 
     const handleClose = useCallback(() => {
         setEditModalVisible(false);
-        setEditLabel('');
-        setEditValue('');
+        setEditLabel("");
+        setEditValue("");
         setEditingPrompt(null);
     }, []);
 
@@ -231,7 +264,7 @@ export default function PromptsScreen() {
                     disabled={isLoading}
                 >
                     <Text style={styles.buttonText}>
-                        {isLoading ? 'Adding...' : 'Add Prompt'}
+                        {isLoading ? "Adding..." : "Add Prompt"}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -250,11 +283,17 @@ export default function PromptsScreen() {
                                 style={[styles.iconButton, styles.editButton]}
                                 onPress={() => handleEdit(item)}
                             >
-                                <Ionicons name="pencil" size={20} color="#fff" />
+                                <Ionicons
+                                    name="pencil"
+                                    size={20}
+                                    color="#fff"
+                                />
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.iconButton, styles.deleteButton]}
-                                onPress={() => deletePrompt(item._id || item.id)}
+                                onPress={() =>
+                                    deletePrompt(item._id || item.id)
+                                }
                             >
                                 <Ionicons name="trash" size={20} color="#fff" />
                             </TouchableOpacity>
@@ -288,88 +327,88 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 16,
-        backgroundColor: '#fff',
+        backgroundColor: "#fff",
     },
     inputContainer: {
         marginBottom: 20,
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: "#ddd",
         padding: 10,
         marginBottom: 10,
         borderRadius: 5,
     },
     addButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: "#4CAF50",
         padding: 15,
         borderRadius: 5,
-        alignItems: 'center',
+        alignItems: "center",
     },
     buttonText: {
-        color: '#fff',
-        fontWeight: 'bold',
+        color: "#fff",
+        fontWeight: "bold",
     },
     promptItem: {
-        flexDirection: 'row',
+        flexDirection: "row",
         padding: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#ddd',
-        alignItems: 'center',
+        borderBottomColor: "#ddd",
+        alignItems: "center",
     },
     promptText: {
         flex: 1,
     },
     label: {
-        fontWeight: 'bold',
+        fontWeight: "bold",
         fontSize: 16,
         marginBottom: 4,
     },
     value: {
-        color: '#666',
+        color: "#666",
     },
     deleteButton: {
-        backgroundColor: '#ff4444',
+        backgroundColor: "#ff4444",
         padding: 8,
         borderRadius: 5,
         marginLeft: 10,
     },
     deleteButtonText: {
-        color: '#fff',
+        color: "#fff",
     },
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: "center",
+        alignItems: "center",
     },
     modalContent: {
-        backgroundColor: 'white',
+        backgroundColor: "white",
         borderRadius: 10,
         padding: 20,
-        width: '90%',
-        maxHeight: '80%',
+        width: "90%",
+        maxHeight: "80%",
     },
     modalTitle: {
         fontSize: 20,
-        fontWeight: 'bold',
+        fontWeight: "bold",
         marginBottom: 20,
-        textAlign: 'center',
+        textAlign: "center",
     },
     modalInput: {
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: "#ddd",
         borderRadius: 5,
         padding: 10,
         marginBottom: 15,
     },
     multilineInput: {
         height: 100,
-        textAlignVertical: 'top',
+        textAlignVertical: "top",
     },
     modalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        flexDirection: "row",
+        justifyContent: "space-between",
         marginTop: 20,
     },
     modalButton: {
@@ -377,21 +416,21 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 5,
         marginHorizontal: 5,
-        alignItems: 'center',
+        alignItems: "center",
     },
     cancelButton: {
-        backgroundColor: '#ff4444',
+        backgroundColor: "#ff4444",
     },
     saveButton: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: "#4CAF50",
     },
     modalButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
+        color: "white",
+        fontWeight: "bold",
     },
     buttonContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: "row",
+        alignItems: "center",
     },
     iconButton: {
         padding: 8,
@@ -399,17 +438,17 @@ const styles = StyleSheet.create({
         marginLeft: 10,
     },
     editButton: {
-        backgroundColor: '#2196F3',
+        backgroundColor: "#2196F3",
     },
     deleteButton: {
-        backgroundColor: '#ff4444',
+        backgroundColor: "#ff4444",
     },
     searchInput: {
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: "#ddd",
         borderRadius: 5,
         padding: 10,
         marginBottom: 15,
-        backgroundColor: '#fff',
+        backgroundColor: "#fff",
     },
 });

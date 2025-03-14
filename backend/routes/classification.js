@@ -1,17 +1,17 @@
 import express from "express";
-import {
-    uploadToImgur,
-    uploadToFreeImageHost,
-} from "../services/imageService.js";
+import { uploadToFreeImageHost } from "../services/imageService.js";
 import { classifyImage } from "../services/aiService.js";
 import Classification from "../models/Classification.js";
+import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/classify", async (req, res) => {
+router.post("/classify", auth, async (req, res) => {
     try {
-        const  image = req.body.image;
-        const prompt = req.body.prompt || "What is in this image? Classify as recyclable, compostable, or landfill. And provide proper disposal instructions";
+        const image = req.body.image;
+        const prompt =
+            req.body.prompt ||
+            "What is in this image? Classify as recyclable, compostable, or landfill. And provide proper disposal instructions";
         const imageUrl = await uploadToFreeImageHost(image);
         const response = await classifyImage(imageUrl, prompt);
 
@@ -19,6 +19,7 @@ router.post("/classify", async (req, res) => {
             imageUrl,
             response,
             prompt,
+            user: req.user._id,
         });
 
         res.json(result);
@@ -27,9 +28,9 @@ router.post("/classify", async (req, res) => {
     }
 });
 
-router.get("/history", async (req, res) => {
+router.get("/history", auth, async (req, res) => {
     try {
-        const history = await Classification.find()
+        const history = await Classification.find({ user: req.user._id })
             .sort({ timestamp: -1 })
             .limit(50);
         res.json(history);

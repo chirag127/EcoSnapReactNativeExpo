@@ -1,5 +1,7 @@
 import express from "express";
 import Prompt from "../models/Prompt.js";
+import { auth } from "../middleware/auth.js";
+
 const router = express.Router();
 
 const defaultPrompts = [
@@ -30,7 +32,6 @@ const defaultPrompts = [
         id: "5",
         label: "Landmark Recognition",
         value: "Recognize landmarks and provide historical facts, fun trivia, and nearby points of interest.",
-
     },
     // What food items are in this image? Provide estimated nutrition facts.
     {
@@ -62,16 +63,19 @@ const defaultPrompts = [
         label: "Dog Breed Recognition",
         value: "What is the breed of this dog? Provide fun facts.",
     },
-
 ];
 
-router.get("/", async (req, res) => {
+router.get("/", auth, async (req, res) => {
     try {
-        const prompts = await Prompt.find();
-        // If no prompts exist, initialize with default prompts
+        const prompts = await Prompt.find({ user: req.user._id });
+        // If no prompts exist for this user, initialize with default prompts
         if (prompts.length === 0) {
-            await Prompt.insertMany(defaultPrompts);
-            return res.json(defaultPrompts);
+            const defaultPromptsWithUser = defaultPrompts.map((prompt) => ({
+                ...prompt,
+                user: req.user._id,
+            }));
+            await Prompt.insertMany(defaultPromptsWithUser);
+            return res.json(defaultPromptsWithUser);
         }
         res.json(prompts);
     } catch (error) {
@@ -79,12 +83,13 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", auth, async (req, res) => {
     try {
         const { label, value } = req.body;
         const newPrompt = await Prompt.create({
             label,
-            value
+            value,
+            user: req.user._id,
         });
         res.status(201).json(newPrompt);
     } catch (error) {
@@ -92,9 +97,12 @@ router.post("/", async (req, res) => {
     }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
     try {
-        const prompt = await Prompt.findByIdAndDelete(req.params.id);
+        const prompt = await Prompt.findOneAndDelete({
+            _id: req.params.id,
+            user: req.user._id,
+        });
         if (!prompt) {
             return res.status(404).json({ error: "Prompt not found" });
         }
@@ -104,14 +112,13 @@ router.delete("/:id", async (req, res) => {
     }
 });
 
-// Add new PUT route for editing prompts
-router.put("/:id", async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
     try {
         const { label, value } = req.body;
-        const updatedPrompt = await Prompt.findByIdAndUpdate(
-            req.params.id,
+        const updatedPrompt = await Prompt.findOneAndUpdate(
+            { _id: req.params.id, user: req.user._id },
             { label, value },
-            { new: true } // Returns the updated document
+            { new: true }
         );
 
         if (!updatedPrompt) {
