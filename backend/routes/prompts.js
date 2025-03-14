@@ -75,7 +75,6 @@ router.get("/", auth, async (req, res) => {
                 ...prompt,
                 user: req.user._id,
             }));
-            await Prompt.insertMany(defaultPromptsWithUser);
             return res.json(defaultPromptsWithUser);
         }
         res.json(prompts);
