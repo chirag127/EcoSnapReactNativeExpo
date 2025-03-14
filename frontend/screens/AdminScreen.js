@@ -26,6 +26,7 @@ export default function AdminScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [expandedPrompts, setExpandedPrompts] = useState(new Set());
     const { logout } = useAuth();
 
     const handleAuthError = () => {
@@ -55,7 +56,9 @@ export default function AdminScreen() {
     const fetchAllPrompts = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_URL}/prompts/admin/all-prompts`);
+            const response = await axios.get(
+                `${API_URL}/prompts/admin/all-prompts`
+            );
             setAllPrompts(response.data);
         } catch (error) {
             if (error.response?.status === 401) {
@@ -112,7 +115,8 @@ export default function AdminScreen() {
                 ]}
             >
                 <Text style={styles.userInfo}>
-                    {item.user?.name || "Unknown"} ({item.user?.email || "No email"})
+                    {item.user?.name || "Unknown"} (
+                    {item.user?.email || "No email"})
                 </Text>
                 <Text style={styles.timestamp}>
                     {new Date(item.timestamp).toLocaleString()}
@@ -124,17 +128,46 @@ export default function AdminScreen() {
         </TouchableOpacity>
     );
 
-    const renderPromptItem = ({ item }) => (
-        <View style={styles.promptItem}>
-            <View style={styles.promptText}>
-                <Text style={styles.userInfo}>
-                    {item.user?.name || "Unknown"} ({item.user?.email || "No email"})
-                </Text>
-                <Text style={styles.label}>{item.label}</Text>
-                <Text style={styles.value} numberOfLines={2}>{item.value}</Text>
+    const renderPromptItem = ({ item }) => {
+        const isExpanded = expandedPrompts.has(item._id);
+        const promptValue = item.value;
+        const shouldShowMore = promptValue.length > 100;
+
+        return (
+            <View style={styles.promptItem}>
+                <View style={styles.promptText}>
+                    <Text style={styles.userInfo}>
+                        {item.user?.name || "Unknown"} (
+                        {item.user?.email || "No email"})
+                    </Text>
+                    <Text style={styles.label}>{item.label}</Text>
+                    <Text
+                        style={styles.value}
+                        numberOfLines={isExpanded ? undefined : 2}
+                    >
+                        {promptValue}
+                    </Text>
+                    {shouldShowMore && (
+                        <TouchableOpacity
+                            onPress={() => {
+                                const newExpanded = new Set(expandedPrompts);
+                                if (isExpanded) {
+                                    newExpanded.delete(item._id);
+                                } else {
+                                    newExpanded.add(item._id);
+                                }
+                                setExpandedPrompts(newExpanded);
+                            }}
+                        >
+                            <Text style={styles.showMoreButton}>
+                                {isExpanded ? "Show Less" : "Show More"}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
-        </View>
-    );
+        );
+    };
 
     if (loading && !refreshing) {
         return (
@@ -183,7 +216,11 @@ export default function AdminScreen() {
 
             <FlatList
                 data={activeTab === "history" ? allHistory : allPrompts}
-                renderItem={activeTab === "history" ? renderHistoryItem : renderPromptItem}
+                renderItem={
+                    activeTab === "history"
+                        ? renderHistoryItem
+                        : renderPromptItem
+                }
                 keyExtractor={(item) => item._id}
                 refreshControl={
                     <RefreshControl
@@ -194,9 +231,7 @@ export default function AdminScreen() {
                     />
                 }
                 ListEmptyComponent={
-                    <Text style={styles.emptyText}>
-                        No data available
-                    </Text>
+                    <Text style={styles.emptyText}>No data available</Text>
                 }
             />
 
@@ -222,10 +257,13 @@ export default function AdminScreen() {
                                     style={styles.modalImage}
                                 />
                                 <Text style={styles.modalUserInfo}>
-                                    {selectedItem.user?.name || "Unknown"} ({selectedItem.user?.email || "No email"})
+                                    {selectedItem.user?.name || "Unknown"} (
+                                    {selectedItem.user?.email || "No email"})
                                 </Text>
                                 <Text style={styles.modalTimestamp}>
-                                    {new Date(selectedItem.timestamp).toLocaleString()}
+                                    {new Date(
+                                        selectedItem.timestamp
+                                    ).toLocaleString()}
                                 </Text>
                                 <Markdown style={markdownStyles}>
                                     {selectedItem.response}
@@ -322,6 +360,12 @@ const styles = StyleSheet.create({
     value: {
         fontSize: 14,
         color: "#555",
+    },
+    showMoreButton: {
+        color: "#4CAF50",
+        fontWeight: "bold",
+        marginTop: 4,
+        fontSize: 14,
     },
     emptyText: {
         textAlign: "center",
