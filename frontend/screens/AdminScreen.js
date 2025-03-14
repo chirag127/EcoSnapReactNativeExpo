@@ -11,6 +11,7 @@ import {
     Modal,
     Image,
     ScrollView,
+    Clipboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
@@ -133,18 +134,24 @@ export default function AdminScreen() {
         const promptValue = item.value;
         const shouldShowMore = promptValue.length > 100;
 
+        const handleCopy = () => {
+            Clipboard.setString(promptValue);
+            Alert.alert("Copied", "Prompt copied to clipboard");
+        };
+
         return (
             <View style={styles.promptItem}>
-                <View style={styles.promptText}>
+                <View style={styles.promptHeader}>
                     <Text style={styles.userInfo}>
-                        {item.user?.name || "Unknown"} (
-                        {item.user?.email || "No email"})
+                        {item.user?.name || "Unknown"} ({item.user?.email || "No email"})
                     </Text>
+                    <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
+                        <Ionicons name="copy-outline" size={20} color="#4CAF50" />
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.promptText}>
                     <Text style={styles.label}>{item.label}</Text>
-                    <Text
-                        style={styles.value}
-                        numberOfLines={isExpanded ? undefined : 2}
-                    >
+                    <Text style={styles.value} numberOfLines={isExpanded ? undefined : 2}>
                         {promptValue}
                     </Text>
                     {shouldShowMore && (
@@ -348,6 +355,15 @@ const styles = StyleSheet.create({
         padding: 12,
         borderBottomWidth: 1,
         borderBottomColor: "#e0e0e0",
+    },
+    promptHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    copyButton: {
+        padding: 8,
     },
     promptText: {
         flex: 1,
