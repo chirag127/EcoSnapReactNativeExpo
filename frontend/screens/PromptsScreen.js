@@ -9,6 +9,7 @@ import {
     Alert,
     RefreshControl,
     Modal,
+    Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
@@ -89,9 +90,14 @@ export default function PromptsScreen() {
     const { logout } = useAuth();
 
     const handleAuthError = () => {
-        Alert.alert("Session Expired", "Please log in again", [
-            { text: "OK", onPress: () => logout() },
-        ]);
+        if (Platform.OS === "web") {
+            alert("Session Expired. Please log in again");
+            logout();
+        } else {
+            Alert.alert("Session Expired", "Please log in again", [
+                { text: "OK", onPress: () => logout() },
+            ]);
+        }
     };
 
     // Filter prompts based on search query
@@ -129,7 +135,11 @@ export default function PromptsScreen() {
 
     const addPrompt = async () => {
         if (!newLabel.trim() || !newValue.trim()) {
-            Alert.alert("Error", "Please fill in both fields");
+            if (Platform.OS === "web") {
+                alert("Please fill in both fields");
+            } else {
+                Alert.alert("Error", "Please fill in both fields");
+            }
             return;
         }
 
@@ -146,7 +156,11 @@ export default function PromptsScreen() {
             if (error.response?.status === 401) {
                 handleAuthError();
             } else {
-                Alert.alert("Error", "Failed to add prompt");
+                if (Platform.OS === "web") {
+                    alert("Failed to add prompt");
+                } else {
+                    Alert.alert("Error", "Failed to add prompt");
+                }
             }
         } finally {
             setIsLoading(false);
@@ -154,29 +168,52 @@ export default function PromptsScreen() {
     };
 
     const deletePrompt = async (id) => {
-        Alert.alert(
-            "Confirm Delete",
-            "Are you sure you want to delete this prompt?",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: async () => {
-                        try {
-                            await axios.delete(`${API_URL}/prompts/${id}`);
-                            setPrompts(prompts.filter((p) => p._id !== id));
-                        } catch (error) {
-                            if (error.response?.status === 401) {
-                                handleAuthError();
-                            } else {
-                                Alert.alert("Error", "Failed to delete prompt");
+        // Use different confirmation approach for web platform
+        if (Platform.OS === "web") {
+            const confirmDelete = window.confirm(
+                "Are you sure you want to delete this prompt?"
+            );
+            if (confirmDelete) {
+                try {
+                    await axios.delete(`${API_URL}/prompts/${id}`);
+                    setPrompts(prompts.filter((p) => p._id !== id));
+                } catch (error) {
+                    if (error.response?.status === 401) {
+                        handleAuthError();
+                    } else {
+                        alert("Failed to delete prompt");
+                    }
+                }
+            }
+        } else {
+            // Use React Native Alert for mobile platforms
+            Alert.alert(
+                "Confirm Delete",
+                "Are you sure you want to delete this prompt?",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: async () => {
+                            try {
+                                await axios.delete(`${API_URL}/prompts/${id}`);
+                                setPrompts(prompts.filter((p) => p._id !== id));
+                            } catch (error) {
+                                if (error.response?.status === 401) {
+                                    handleAuthError();
+                                } else {
+                                    Alert.alert(
+                                        "Error",
+                                        "Failed to delete prompt"
+                                    );
+                                }
                             }
-                        }
+                        },
                     },
-                },
-            ]
-        );
+                ]
+            );
+        }
     };
 
     const handleEdit = (prompt) => {
@@ -188,7 +225,11 @@ export default function PromptsScreen() {
 
     const saveEdit = async () => {
         if (!editLabel.trim() || !editValue.trim()) {
-            Alert.alert("Error", "Please fill in both fields");
+            if (Platform.OS === "web") {
+                alert("Please fill in both fields");
+            } else {
+                Alert.alert("Error", "Please fill in both fields");
+            }
             return;
         }
 
@@ -214,7 +255,11 @@ export default function PromptsScreen() {
             if (error.response?.status === 401) {
                 handleAuthError();
             } else {
-                Alert.alert("Error", "Failed to update prompt");
+                if (Platform.OS === "web") {
+                    alert("Failed to update prompt");
+                } else {
+                    Alert.alert("Error", "Failed to update prompt");
+                }
             }
         } finally {
             setIsLoading(false);
