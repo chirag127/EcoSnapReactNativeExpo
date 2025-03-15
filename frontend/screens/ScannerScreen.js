@@ -19,33 +19,13 @@ import * as Speech from "expo-speech";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { API_URL } from "../env";
-import * as ImageManipulator from "expo-image-manipulator";
 import Markdown from "react-native-markdown-display";
 import { Picker } from "@react-native-picker/picker";
 import Slider from "@react-native-community/slider";
 import { useAuth } from "../context/AuthContext";
+import { compressImage } from "../utils/imageUtils";
 
-const compressImage = async (uri) => {
-    try {
-        // Skip image manipulation on web platform
-        if (Platform.OS === "web") {
-            console.log("Skipping image compression on web platform");
-            return uri;
-        }
-
-        // Only use ImageManipulator on native platforms
-        const manipResult = await ImageManipulator.manipulateAsync(
-            uri,
-            [{ resize: { width: 1024 } }],
-            { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
-        );
-        return manipResult.uri;
-    } catch (error) {
-        console.error("Image compression error:", error);
-        // Return original URI if compression fails
-        return uri;
-    }
-};
+// compressImage function is now imported from utils/imageUtils.js
 
 export default function ScannerScreen() {
     const [image, setImage] = useState(null);
