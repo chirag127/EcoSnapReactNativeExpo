@@ -11,6 +11,7 @@ import {
     Clipboard,
     TextInput,
     Modal,
+    Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
@@ -26,6 +27,13 @@ import { useAuth } from "../context/AuthContext";
 
 const compressImage = async (uri) => {
     try {
+        // Skip image manipulation on web platform
+        if (Platform.OS === "web") {
+            console.log("Skipping image compression on web platform");
+            return uri;
+        }
+
+        // Only use ImageManipulator on native platforms
         const manipResult = await ImageManipulator.manipulateAsync(
             uri,
             [{ resize: { width: 1024 } }],
@@ -34,7 +42,8 @@ const compressImage = async (uri) => {
         return manipResult.uri;
     } catch (error) {
         console.error("Image compression error:", error);
-        throw error;
+        // Return original URI if compression fails
+        return uri;
     }
 };
 
@@ -131,43 +140,90 @@ export default function ScannerScreen() {
             setIsLoading(true);
             setClassification("Processing...");
 
-            // Compress image before processing
-            const compressedUri = await compressImage(imageUri);
-            const response = await fetch(compressedUri);
-            const blob = await response.blob();
-            const reader = new FileReader();
+            // Force a render cycle to ensure "Processing..." is displayed
+            await new Promise((resolve) => setTimeout(resolve, 0));
 
-            reader.onload = async () => {
-                const base64data = reader.result.split(",")[1];
-                try {
-                    const result = await axios.post(`${API_URL}/classify`, {
-                        image: base64data,
-                        prompt: showCustomPrompt
-                            ? customPrompt
-                            : prompts.find((p) => p._id === selectedPrompt)
-                                  ?.value || "",
-                    });
-                    setClassification(result.data.response);
-                } catch (error) {
-                    if (error.response?.status === 401) {
-                        handleAuthError();
-                    } else {
-                        console.error(
-                            "Classification error:",
-                            error.response?.data || error.message
+            try {
+                // Compress image before processing (will be skipped on web)
+                const compressedUri = await compressImage(imageUri);
+                console.log("Image compressed/prepared successfully");
+
+                // Process the image
+                let base64data;
+
+                if (Platform.OS === "web") {
+                    // Web-specific image handling
+                    try {
+                        // For web, we'll use a different approach to get base64
+                        const response = await fetch(compressedUri);
+                        const blob = await response.blob();
+
+                        // Use a promise to handle FileReader async operation
+                        base64data = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const result = reader.result.split(",")[1];
+                                resolve(result);
+                            };
+                            reader.onerror = (error) => {
+                                console.error("FileReader error:", error);
+                                reject(error);
+                            };
+                            reader.readAsDataURL(blob);
+                        });
+
+                        console.log(
+                            "Web: Image converted to base64 successfully"
                         );
-                        Alert.alert("Error", "Failed to classify image");
-                        setClassification(null);
+                    } catch (webError) {
+                        console.error(
+                            "Web-specific image processing error:",
+                            webError
+                        );
+                        throw webError;
                     }
-                } finally {
-                    setIsLoading(false);
-                }
-            };
+                } else {
+                    // Native platforms
+                    const response = await fetch(compressedUri);
+                    const blob = await response.blob();
 
-            reader.readAsDataURL(blob);
+                    // Use a promise to handle FileReader async operation
+                    base64data = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const result = reader.result.split(",")[1];
+                            resolve(result);
+                        };
+                        reader.onerror = (error) => {
+                            console.error("FileReader error:", error);
+                            reject(error);
+                        };
+                        reader.readAsDataURL(blob);
+                    });
+                }
+
+                // Send the image to the API
+                console.log("Sending image to API for classification...");
+                const result = await axios.post(`${API_URL}/classify`, {
+                    image: base64data,
+                    prompt: showCustomPrompt
+                        ? customPrompt
+                        : prompts.find((p) => p._id === selectedPrompt)
+                              ?.value || "",
+                });
+
+                console.log("Classification received");
+                setClassification(result.data.response);
+            } catch (processingError) {
+                console.error("Image processing error:", processingError);
+                Alert.alert("Error", "Failed to process image");
+                setClassification(null);
+            } finally {
+                setIsLoading(false);
+            }
         } catch (error) {
-            console.error("Image processing error:", error);
-            Alert.alert("Error", "Failed to process image");
+            console.error("Unexpected error in classifyImage:", error);
+            Alert.alert("Error", "An unexpected error occurred");
             setClassification(null);
             setIsLoading(false);
         }
@@ -351,9 +407,17 @@ export default function ScannerScreen() {
                                 />
                             </TouchableOpacity>
                         </View>
-                        <Markdown style={markdownStyles}>
-                            {classification}
-                        </Markdown>
+                        {isLoading && classification === "Processing..." ? (
+                            <View style={styles.loadingContainer}>
+                                <Text style={styles.processingText}>
+                                    Processing...
+                                </Text>
+                            </View>
+                        ) : (
+                            <Markdown style={markdownStyles}>
+                                {classification}
+                            </Markdown>
+                        )}
                     </View>
                 )}
             </ScrollView>
@@ -419,6 +483,16 @@ const styles = StyleSheet.create({
     },
     resultText: {
         fontSize: 18,
+    },
+    loadingContainer: {
+        padding: 20,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    processingText: {
+        fontSize: 18,
+        color: "#4CAF50",
+        fontWeight: "bold",
     },
     copiedText: {
         color: "#4CAF50",
