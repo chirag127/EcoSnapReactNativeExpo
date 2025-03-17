@@ -27,7 +27,7 @@ import { compressImage } from "../utils/imageUtils";
 
 // compressImage function is now imported from utils/imageUtils.js
 
-export default function ScannerScreen() {
+export default function ScannerScreen({ navigation, route }) {
     const [image, setImage] = useState(null);
     const [classification, setClassification] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +41,16 @@ export default function ScannerScreen() {
     const [speechRate, setSpeechRate] = useState(1.0);
     const [showSpeechSettings, setShowSpeechSettings] = useState(false);
     const { logout } = useAuth();
+
+    // Check if we have a sketch URI from the DrawCanvasScreen
+    useEffect(() => {
+        if (route.params?.sketchUri) {
+            setImage(route.params.sketchUri);
+            classifyImage(route.params.sketchUri);
+            // Clear the params to avoid reprocessing on re-render
+            navigation.setParams({ sketchUri: undefined });
+        }
+    }, [route.params?.sketchUri]);
 
     const handleAuthError = () => {
         Alert.alert("Session Expired", "Please log in again", [
@@ -343,6 +353,12 @@ export default function ScannerScreen() {
                     <TouchableOpacity style={styles.button} onPress={pickImage}>
                         <Text style={styles.buttonText}>Pick Image</Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => navigation.navigate("Draw")}
+                    >
+                        <Text style={styles.buttonText}>Draw Sketch</Text>
+                    </TouchableOpacity>
                 </View>
                 {classification && (
                     <View style={styles.resultContainer}>
@@ -441,15 +457,18 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         flexDirection: "row",
+        flexWrap: "wrap",
         justifyContent: "space-around",
         width: "100%",
+        gap: 10,
     },
     button: {
         backgroundColor: "#4CAF50",
         padding: 15,
         borderRadius: 5,
-        minWidth: 120,
+        minWidth: 100,
         alignItems: "center",
+        marginBottom: 10,
     },
     buttonText: {
         color: "white",
