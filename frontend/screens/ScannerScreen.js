@@ -34,7 +34,7 @@ export default function ScannerScreen({ navigation, route }) {
     const [refreshing, setRefreshing] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [prompts, setPrompts] = useState([]);
-    const [selectedPrompt, setSelectedPrompt] = useState("custom");
+    const [selectedPrompt, setSelectedPrompt] = useState("");
     const [customPrompt, setCustomPrompt] = useState("");
     const [showCustomPrompt, setShowCustomPrompt] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -78,6 +78,22 @@ export default function ScannerScreen({ navigation, route }) {
         try {
             const response = await axios.get(`${API_URL}/prompts`);
             setPrompts(response.data);
+
+            // Set default prompt to Recycling Guide if available
+            if (response.data && response.data.length > 0) {
+                // Find the Recycling Guide prompt
+                const recycleGuidePrompt = response.data.find(
+                    (p) => p.label === "Recycling Guide"
+                );
+                if (recycleGuidePrompt) {
+                    setSelectedPrompt(recycleGuidePrompt._id);
+                    setShowCustomPrompt(false);
+                } else {
+                    // If Recycling Guide not found, use the first prompt
+                    setSelectedPrompt(response.data[0]._id);
+                    setShowCustomPrompt(false);
+                }
+            }
         } catch (error) {
             if (error.response?.status === 401) {
                 handleAuthError();
