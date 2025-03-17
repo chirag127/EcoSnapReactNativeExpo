@@ -13,13 +13,13 @@ import AdminScreen from "./screens/AdminScreen";
 const Tab = createBottomTabNavigator();
 
 function AppContent() {
-    const { user, loading, logout } = useAuth();
+    const { user, loading, logout, pendingVerification } = useAuth();
 
     if (loading) {
         return null; // Or a loading spinner
     }
 
-    if (!user) {
+    if (!user || pendingVerification || (user && !user.isVerified)) {
         return <AuthScreen />;
     }
 

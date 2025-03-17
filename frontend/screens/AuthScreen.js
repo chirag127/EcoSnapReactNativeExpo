@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -11,6 +11,7 @@ import {
     ScrollView,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import VerifyEmailScreen from "./VerifyEmailScreen";
 
 export default function AuthScreen() {
     const [isLogin, setIsLogin] = useState(true);
@@ -19,7 +20,24 @@ export default function AuthScreen() {
     const [name, setName] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const { login, register } = useAuth();
+    const {
+        login,
+        register,
+        pendingVerification,
+        user,
+        resetVerificationState,
+    } = useAuth();
+
+    const [showVerification, setShowVerification] = useState(false);
+
+    useEffect(() => {
+        // If user is logged in but not verified, show verification screen
+        if (pendingVerification || (user && !user.isVerified)) {
+            setShowVerification(true);
+        } else {
+            setShowVerification(false);
+        }
+    }, [user, pendingVerification]);
 
     const handleSubmit = async () => {
         if (loading) return;
@@ -38,8 +56,22 @@ export default function AuthScreen() {
                 result = await register(name, email, password);
             }
 
-            if (!result.success) {
-                Alert.alert("Error", result.error);
+            if (!result.success && !result.needsVerification) {
+                // Show more detailed error message
+                const errorDetails = result.details
+                    ? `\n\nDetails: ${result.details}`
+                    : "";
+                Alert.alert("Error", `${result.error}${errorDetails}`);
+            } else if (
+                result.needsVerification ||
+                (result.success && !isLogin)
+            ) {
+                // Show verification message
+                Alert.alert(
+                    "Verification Required",
+                    "A verification code has been sent to your email. Please verify your account."
+                );
+                setShowVerification(true);
             }
         } catch (error) {
             Alert.alert("Error", error.message);
@@ -47,6 +79,24 @@ export default function AuthScreen() {
             setLoading(false);
         }
     };
+
+    const handleBackFromVerification = () => {
+        // Allow going back to login screen
+        setShowVerification(false);
+        resetVerificationState();
+
+        // If the user was in the middle of registration, clear the form
+        if (!isLogin) {
+            setIsLogin(true);
+            setName("");
+            setEmail("");
+            setPassword("");
+        }
+    };
+
+    if (showVerification) {
+        return <VerifyEmailScreen onBack={handleBackFromVerification} />;
+    }
 
     return (
         <KeyboardAvoidingView
