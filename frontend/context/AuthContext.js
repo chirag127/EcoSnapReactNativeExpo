@@ -188,6 +188,49 @@ export const AuthProvider = ({ children }) => {
         setPendingVerification(false);
     };
 
+    // Request password reset
+    const requestPasswordReset = async (email) => {
+        try {
+            const response = await axios.post(
+                `${API_URL}/auth/forgot-password`,
+                {
+                    email,
+                }
+            );
+
+            return { success: true, message: response.data.message };
+        } catch (error) {
+            return {
+                success: false,
+                error:
+                    error.response?.data?.error ||
+                    "Failed to request password reset",
+            };
+        }
+    };
+
+    // Reset password with code
+    const resetPassword = async (email, resetCode, newPassword) => {
+        try {
+            const response = await axios.post(
+                `${API_URL}/auth/reset-password`,
+                {
+                    email,
+                    resetCode,
+                    newPassword,
+                }
+            );
+
+            return { success: true, message: response.data.message };
+        } catch (error) {
+            return {
+                success: false,
+                error:
+                    error.response?.data?.error || "Failed to reset password",
+            };
+        }
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -201,6 +244,8 @@ export const AuthProvider = ({ children }) => {
                 verifyEmail,
                 resendVerificationCode,
                 resetVerificationState,
+                requestPasswordReset,
+                resetPassword,
             }}
         >
             {children}

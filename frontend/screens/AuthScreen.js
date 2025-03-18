@@ -10,6 +10,7 @@ import {
     Platform,
     ScrollView,
     Dimensions,
+    ActivityIndicator,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import VerifyEmailScreen from "./VerifyEmailScreen";
@@ -21,12 +22,21 @@ export default function AuthScreen() {
     const [name, setName] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // Password reset states
+    const [isPasswordReset, setIsPasswordReset] = useState(false);
+    const [resetStep, setResetStep] = useState(1); // 1: Email entry, 2: Code + new password
+    const [resetCode, setResetCode] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+
     const {
         login,
         register,
         pendingVerification,
         user,
         resetVerificationState,
+        requestPasswordReset,
+        resetPassword,
     } = useAuth();
 
     const [showVerification, setShowVerification] = useState(false);
@@ -95,10 +105,198 @@ export default function AuthScreen() {
         }
     };
 
+    // Handle forgot password button click
+    const handleForgotPassword = () => {
+        setIsPasswordReset(true);
+        setResetStep(1);
+        setResetCode("");
+        setNewPassword("");
+        setConfirmPassword("");
+    };
+
+    // Handle back from password reset
+    const handleBackFromReset = () => {
+        setIsPasswordReset(false);
+        setResetStep(1);
+    };
+
+    // Handle request password reset
+    const handleRequestReset = async () => {
+        if (!email) {
+            Alert.alert("Error", "Please enter your email address");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await requestPasswordReset(email);
+            if (result.success) {
+                setResetStep(2);
+                Alert.alert(
+                    "Check Your Email",
+                    "If an account exists with this email, you will receive a password reset code."
+                );
+            } else {
+                Alert.alert("Error", result.error);
+            }
+        } catch (error) {
+            Alert.alert("Error", error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle confirm password reset
+    const handleConfirmReset = async () => {
+        if (!resetCode) {
+            Alert.alert("Error", "Please enter the reset code");
+            return;
+        }
+
+        if (!newPassword) {
+            Alert.alert("Error", "Please enter a new password");
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            Alert.alert("Error", "Passwords do not match");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await resetPassword(email, resetCode, newPassword);
+            if (result.success) {
+                Alert.alert(
+                    "Success",
+                    "Your password has been reset successfully"
+                );
+                setIsPasswordReset(false);
+                setIsLogin(true);
+                setPassword("");
+            } else {
+                Alert.alert("Error", result.error);
+            }
+        } catch (error) {
+            Alert.alert("Error", error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (showVerification) {
         return <VerifyEmailScreen onBack={handleBackFromVerification} />;
     }
 
+    // Password Reset UI
+    if (isPasswordReset) {
+        return (
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={styles.container}
+            >
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <View style={styles.formContainer}>
+                        <View style={styles.form}>
+                            <Text style={styles.title}>
+                                {resetStep === 1
+                                    ? "Reset Password"
+                                    : "Enter Reset Code"}
+                            </Text>
+
+                            {resetStep === 1 ? (
+                                // Step 1: Enter email
+                                <>
+                                    <Text style={styles.instructions}>
+                                        Enter your email address and we'll send
+                                        you a code to reset your password.
+                                    </Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Email"
+                                        value={email}
+                                        onChangeText={setEmail}
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                    />
+
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.button,
+                                            loading && styles.buttonDisabled,
+                                        ]}
+                                        onPress={handleRequestReset}
+                                        disabled={loading}
+                                    >
+                                        <Text style={styles.buttonText}>
+                                            {loading
+                                                ? "Sending..."
+                                                : "Send Reset Code"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </>
+                            ) : (
+                                // Step 2: Enter code and new password
+                                <>
+                                    <Text style={styles.instructions}>
+                                        Enter the code sent to your email and
+                                        your new password.
+                                    </Text>
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Reset Code"
+                                        value={resetCode}
+                                        onChangeText={setResetCode}
+                                        autoCapitalize="none"
+                                    />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="New Password"
+                                        value={newPassword}
+                                        onChangeText={setNewPassword}
+                                        secureTextEntry
+                                    />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Confirm New Password"
+                                        value={confirmPassword}
+                                        onChangeText={setConfirmPassword}
+                                        secureTextEntry
+                                    />
+
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.button,
+                                            loading && styles.buttonDisabled,
+                                        ]}
+                                        onPress={handleConfirmReset}
+                                        disabled={loading}
+                                    >
+                                        <Text style={styles.buttonText}>
+                                            {loading
+                                                ? "Resetting..."
+                                                : "Reset Password"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </>
+                            )}
+
+                            <TouchableOpacity
+                                style={styles.switchButton}
+                                onPress={handleBackFromReset}
+                            >
+                                <Text style={styles.switchButtonText}>
+                                    Back to Login
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        );
+    }
+
+    // Login/Register UI
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -155,6 +353,17 @@ export default function AuthScreen() {
                             </Text>
                         </TouchableOpacity>
 
+                        {isLogin && (
+                            <TouchableOpacity
+                                style={styles.forgotButton}
+                                onPress={handleForgotPassword}
+                            >
+                                <Text style={styles.forgotButtonText}>
+                                    Forgot Password?
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+
                         <TouchableOpacity
                             style={styles.switchButton}
                             onPress={() => setIsLogin(!isLogin)}
@@ -172,8 +381,8 @@ export default function AuthScreen() {
     );
 }
 
-const { width } = Dimensions.get('window');
-const isWeb = Platform.OS === 'web';
+const { width } = Dimensions.get("window");
+const isWeb = Platform.OS === "web";
 
 const styles = StyleSheet.create({
     container: {
@@ -214,6 +423,12 @@ const styles = StyleSheet.create({
         textAlign: "center",
         color: "#333",
     },
+    instructions: {
+        fontSize: 16,
+        textAlign: "center",
+        marginBottom: 20,
+        color: "#666",
+    },
     input: {
         borderWidth: 1,
         borderColor: "#e0e0e0",
@@ -245,6 +460,20 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 18,
         fontWeight: "bold",
+    },
+    forgotButton: {
+        marginTop: 15,
+        alignItems: "center",
+        ...(isWeb && {
+            cursor: "pointer",
+        }),
+    },
+    forgotButtonText: {
+        color: "#4CAF50",
+        fontSize: 16,
+        ...(isWeb && {
+            transition: "color 0.3s",
+        }),
     },
     switchButton: {
         marginTop: 25,

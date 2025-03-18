@@ -257,6 +257,94 @@ router.post("/resend-verification", async (req, res) => {
     }
 });
 
+// Forgot Password - Request password reset
+router.post("/forgot-password", async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // Find user
+        const user = await User.findOne({ email });
+        if (!user) {
+            // For security reasons, don't reveal that the user doesn't exist
+            return res.json({
+                message:
+                    "If your email is registered, you will receive a password reset code.",
+            });
+        }
+
+        // Generate reset code
+        const resetPasswordCode = crypto.randomBytes(3).toString("hex");
+        const resetPasswordCodeExpires = new Date(
+            Date.now() + 1 * 60 * 60 * 1000
+        ); // 1 hour
+
+        // Update user
+        user.resetPasswordCode = resetPasswordCode;
+        user.resetPasswordCodeExpires = resetPasswordCodeExpires;
+        await user.save();
+
+        // Send reset email
+        const resetEmailHtml = `
+            <h1>EcoSnap Password Reset</h1>
+            <p>You requested a password reset. Please enter the following code in the app to reset your password:</p>
+            <h2 style="color: #4CAF50; font-size: 24px;">${resetPasswordCode}</h2>
+            <p>This code will expire in 1 hour.</p>
+            <p>If you didn't request this reset, you can safely ignore this email.</p>
+        `;
+
+        // Try to send email but continue even if it fails
+        const emailSent = await sendEmail(
+            email,
+            "Reset Your EcoSnap Password",
+            resetEmailHtml
+        );
+
+        if (!emailSent) {
+            console.log(
+                `Failed to send password reset email to ${email}, but continuing`
+            );
+        }
+
+        res.json({
+            message:
+                "If your email is registered, you will receive a password reset code.",
+        });
+    } catch (error) {
+        console.error("Password reset request error:", error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Reset Password - Confirm password reset with code
+router.post("/reset-password", async (req, res) => {
+    try {
+        const { email, resetCode, newPassword } = req.body;
+
+        // Find user
+        const user = await User.findOne({
+            email,
+            resetPasswordCode: resetCode,
+            resetPasswordCodeExpires: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res
+                .status(400)
+                .json({ error: "Invalid or expired reset code" });
+        }
+
+        // Update password
+        user.password = newPassword;
+        user.resetPasswordCode = undefined;
+        user.resetPasswordCodeExpires = undefined;
+        await user.save();
+
+        res.json({ message: "Password reset successfully" });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 // Test route to check if server is running
 router.get("/test", (req, res) => {
     res.json({ message: "Auth server is running correctly" });
