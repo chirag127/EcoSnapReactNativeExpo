@@ -5,7 +5,6 @@ import {
     Text,
     TouchableOpacity,
     Image,
-    Alert,
     ScrollView,
     RefreshControl,
     Clipboard,
@@ -13,6 +12,7 @@ import {
     Modal,
     Platform,
 } from "react-native";
+import { showAlert } from "../utils/alertUtils";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import * as Speech from "expo-speech";
@@ -53,7 +53,7 @@ export default function ScannerScreen({ navigation, route }) {
     }, [route.params?.sketchUri]);
 
     const handleAuthError = () => {
-        Alert.alert("Session Expired", "Please log in again", [
+        showAlert("Session Expired", "Please log in again", [
             { text: "OK", onPress: () => logout() },
         ]);
     };
@@ -222,14 +222,14 @@ export default function ScannerScreen({ navigation, route }) {
                 setClassification(result.data.response);
             } catch (processingError) {
                 console.error("Image processing error:", processingError);
-                Alert.alert("Error", "Failed to process image");
+                showAlert("Error", "Failed to process image");
                 setClassification(null);
             } finally {
                 setIsLoading(false);
             }
         } catch (error) {
             console.error("Unexpected error in classifyImage:", error);
-            Alert.alert("Error", "An unexpected error occurred");
+            showAlert("Error", "An unexpected error occurred");
             setClassification(null);
             setIsLoading(false);
         }
@@ -261,7 +261,7 @@ export default function ScannerScreen({ navigation, route }) {
             }
         } catch (error) {
             console.error("Speech error:", error);
-            Alert.alert("Error", "Failed to start text-to-speech");
+            showAlert("Error", "Failed to start text-to-speech");
             setIsSpeaking(false);
         }
     };

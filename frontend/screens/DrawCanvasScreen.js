@@ -5,11 +5,11 @@ import {
     Text,
     TouchableOpacity,
     Dimensions,
-    Alert,
     ActivityIndicator,
     ScrollView,
     PanResponder,
 } from "react-native";
+import { showAlert } from "../utils/alertUtils";
 import { Svg, Path } from "react-native-svg";
 import * as FileSystem from "expo-file-system";
 import { captureRef } from "react-native-view-shot";
@@ -121,7 +121,7 @@ export default function DrawCanvasScreen({ navigation }) {
 
     const saveCanvas = async () => {
         if (paths.length === 0) {
-            Alert.alert("Empty Canvas", "Please draw something first");
+            showAlert("Empty Canvas", "Please draw something first");
             return;
         }
 
@@ -163,7 +163,7 @@ export default function DrawCanvasScreen({ navigation }) {
             console.log("Navigation triggered");
         } catch (error) {
             console.error("Error saving canvas:", error);
-            Alert.alert("Error", "Failed to save canvas: " + error.message);
+            showAlert("Error", "Failed to save canvas: " + error.message);
         } finally {
             setSaving(false);
         }

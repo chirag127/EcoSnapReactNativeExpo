@@ -5,12 +5,12 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
     Dimensions,
 } from "react-native";
+import { showAlert } from "../utils/alertUtils";
 import { useAuth } from "../context/AuthContext";
 
 export default function VerifyEmailScreen({ onBack }) {
@@ -22,7 +22,7 @@ export default function VerifyEmailScreen({ onBack }) {
     const handleVerify = async () => {
         if (loading) return;
         if (!verificationCode) {
-            Alert.alert("Error", "Please enter the verification code");
+            showAlert("Error", "Please enter the verification code");
             return;
         }
 
@@ -30,14 +30,14 @@ export default function VerifyEmailScreen({ onBack }) {
         try {
             const result = await verifyEmail(user.email, verificationCode);
             if (!result.success) {
-                Alert.alert("Error", result.error);
+                showAlert("Error", result.error);
             } else {
-                Alert.alert("Success", "Email verified successfully");
+                showAlert("Success", "Email verified successfully");
                 // No need to call onBack here as the App.js will automatically
                 // redirect to the main app once the user is verified
             }
         } catch (error) {
-            Alert.alert("Error", error.message);
+            showAlert("Error", error.message);
         } finally {
             setLoading(false);
         }
@@ -50,15 +50,12 @@ export default function VerifyEmailScreen({ onBack }) {
         try {
             const result = await resendVerificationCode(user.email);
             if (!result.success) {
-                Alert.alert("Error", result.error);
+                showAlert("Error", result.error);
             } else {
-                Alert.alert(
-                    "Success",
-                    "Verification code resent to your email"
-                );
+                showAlert("Success", "Verification code resent to your email");
             }
         } catch (error) {
-            Alert.alert("Error", error.message);
+            showAlert("Error", error.message);
         } finally {
             setResendLoading(false);
         }
@@ -74,8 +71,8 @@ export default function VerifyEmailScreen({ onBack }) {
                     <View style={styles.form}>
                         <Text style={styles.title}>Verify Your Email</Text>
                         <Text style={styles.subtitle}>
-                            We've sent a verification code to {user?.email}. Please
-                            enter it below.
+                            We've sent a verification code to {user?.email}.
+                            Please enter it below.
                         </Text>
 
                         <TextInput
@@ -116,7 +113,9 @@ export default function VerifyEmailScreen({ onBack }) {
                             style={styles.backButton}
                             onPress={onBack}
                         >
-                            <Text style={styles.backButtonText}>Back to Login</Text>
+                            <Text style={styles.backButtonText}>
+                                Back to Login
+                            </Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -125,8 +124,8 @@ export default function VerifyEmailScreen({ onBack }) {
     );
 }
 
-const { width } = Dimensions.get('window');
-const isWeb = Platform.OS === 'web';
+const { width } = Dimensions.get("window");
+const isWeb = Platform.OS === "web";
 
 const styles = StyleSheet.create({
     container: {

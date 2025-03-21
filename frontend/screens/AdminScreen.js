@@ -7,12 +7,13 @@ import {
     FlatList,
     ActivityIndicator,
     RefreshControl,
-    Alert,
     Modal,
     Image,
     ScrollView,
     Clipboard,
+    Platform,
 } from "react-native";
+import { showAlert } from "../utils/alertUtils";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { API_URL } from "../env";
@@ -31,7 +32,7 @@ export default function AdminScreen() {
     const { logout } = useAuth();
 
     const handleAuthError = () => {
-        Alert.alert("Session Expired", "Please log in again", [
+        showAlert("Session Expired", "Please log in again", [
             { text: "OK", onPress: () => logout() },
         ]);
     };
@@ -45,9 +46,9 @@ export default function AdminScreen() {
             if (error.response?.status === 401) {
                 handleAuthError();
             } else if (error.response?.status === 403) {
-                Alert.alert("Access Denied", "You don't have admin privileges");
+                showAlert("Access Denied", "You don't have admin privileges");
             } else {
-                Alert.alert("Error", "Failed to fetch history data");
+                showAlert("Error", "Failed to fetch history data");
             }
         } finally {
             setLoading(false);
@@ -65,9 +66,9 @@ export default function AdminScreen() {
             if (error.response?.status === 401) {
                 handleAuthError();
             } else if (error.response?.status === 403) {
-                Alert.alert("Access Denied", "You don't have admin privileges");
+                showAlert("Access Denied", "You don't have admin privileges");
             } else {
-                Alert.alert("Error", "Failed to fetch prompts data");
+                showAlert("Error", "Failed to fetch prompts data");
             }
         } finally {
             setLoading(false);
@@ -95,7 +96,7 @@ export default function AdminScreen() {
     const getWasteColor = (response) => {
         const text = response.toLowerCase();
         if (text.includes("recyclable")) return "#4CAF50";
-        if (text.includes("compostable")) return "#FF9800";
+        if (text.includes("composable")) return "#FF9800";
         if (text.includes("landfill")) return "#F44336";
         return "#757575";
     };
@@ -136,22 +137,33 @@ export default function AdminScreen() {
 
         const handleCopy = () => {
             Clipboard.setString(promptValue);
-            Alert.alert("Copied", "Prompt copied to clipboard");
+            showAlert("Copied", "Prompt copied to clipboard");
         };
 
         return (
             <View style={styles.promptItem}>
                 <View style={styles.promptHeader}>
                     <Text style={styles.userInfo}>
-                        {item.user?.name || "Unknown"} ({item.user?.email || "No email"})
+                        {item.user?.name || "Unknown"} (
+                        {item.user?.email || "No email"})
                     </Text>
-                    <TouchableOpacity onPress={handleCopy} style={styles.copyButton}>
-                        <Ionicons name="copy-outline" size={20} color="#4CAF50" />
+                    <TouchableOpacity
+                        onPress={handleCopy}
+                        style={styles.copyButton}
+                    >
+                        <Ionicons
+                            name="copy-outline"
+                            size={20}
+                            color="#4CAF50"
+                        />
                     </TouchableOpacity>
                 </View>
                 <View style={styles.promptText}>
                     <Text style={styles.label}>{item.label}</Text>
-                    <Text style={styles.value} numberOfLines={isExpanded ? undefined : 2}>
+                    <Text
+                        style={styles.value}
+                        numberOfLines={isExpanded ? undefined : 2}
+                    >
                         {promptValue}
                     </Text>
                     {shouldShowMore && (
@@ -357,9 +369,9 @@ const styles = StyleSheet.create({
         borderBottomColor: "#e0e0e0",
     },
     promptHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
         marginBottom: 4,
     },
     copyButton: {

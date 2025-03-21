@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { DialogProvider } from "./utils/alertUtils";
 
 import ScannerScreen from "./screens/ScannerScreen";
 import HistoryScreen from "./screens/HistoryScreen";
@@ -72,9 +73,11 @@ function AppContent() {
 export default function App() {
     return (
         <AuthProvider>
-            <NavigationContainer>
-                <AppContent />
-            </NavigationContainer>
+            <DialogProvider>
+                <NavigationContainer>
+                    <AppContent />
+                </NavigationContainer>
+            </DialogProvider>
         </AuthProvider>
     );
 }

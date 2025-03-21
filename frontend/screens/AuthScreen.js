@@ -5,13 +5,13 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
     Dimensions,
     ActivityIndicator,
 } from "react-native";
+import { showAlert } from "../utils/alertUtils";
 import { useAuth } from "../context/AuthContext";
 import VerifyEmailScreen from "./VerifyEmailScreen";
 
@@ -54,7 +54,7 @@ export default function AuthScreen() {
         if (loading) return;
 
         if (!email || !password || (!isLogin && !name)) {
-            Alert.alert("Error", "Please fill in all fields");
+            showAlert("Error", "Please fill in all fields");
             return;
         }
 
@@ -72,20 +72,20 @@ export default function AuthScreen() {
                 const errorDetails = result.details
                     ? `\n\nDetails: ${result.details}`
                     : "";
-                Alert.alert("Error", `${result.error}${errorDetails}`);
+                showAlert("Error", `${result.error}${errorDetails}`);
             } else if (
                 result.needsVerification ||
                 (result.success && !isLogin)
             ) {
                 // Show verification message
-                Alert.alert(
+                showAlert(
                     "Verification Required",
                     "A verification code has been sent to your email. Please verify your account."
                 );
                 setShowVerification(true);
             }
         } catch (error) {
-            Alert.alert("Error", error.message);
+            showAlert("Error", error.message);
         } finally {
             setLoading(false);
         }

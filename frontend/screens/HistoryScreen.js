@@ -7,8 +7,8 @@ import {
     Text,
     ActivityIndicator,
     RefreshControl,
-    Alert,
 } from "react-native";
+import { showAlert } from "../utils/alertUtils";
 import axios from "axios";
 import { API_URL } from "../env";
 import Markdown from "react-native-markdown-display";
@@ -37,7 +37,7 @@ export default function HistoryScreen() {
             setHistory(response.data);
         } catch (err) {
             if (err.response?.status === 401) {
-                Alert.alert("Session Expired", "Please log in again", [
+                showAlert("Session Expired", "Please log in again", [
                     { text: "OK", onPress: () => logout() },
                 ]);
             } else {
