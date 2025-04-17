@@ -1,4 +1,5 @@
 import axios from "axios";
+import fs from "fs"; // Import the fs module for file operations
 import { readFile } from "node:fs/promises";
 // const Groq = require('groq-sdk');
 // import { Groq } from "groq-sdk";
@@ -139,6 +140,19 @@ export const classifyImage = async (imageUrl, prompt) => {
                 throw new Error("All classification attempts failed");
             }
         }
+        else if (imageUrl.startsWith("file://")) {
+            console.log("NVIDIA API key not available for fallback");
+        }
+        else if (!imageUrl.startsWith("file://")) {
+            // download image from url to local path
+            const localPath = `./temp/${Date.now()}.jpg`; // Adjust the path as needed
+
+            const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+            fs.writeFileSync(localPath, response.data);
+            console.log("Image downloaded to:", localPath);
+            return await classifyImageWithNvidia(localPath, prompt);
+        }
+
 
         throw new Error("Failed to classify image");
     }
